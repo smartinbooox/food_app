@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_constants.dart';
+import '../auth/login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -35,10 +36,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       color: Colors.green,
     ),
     OnboardingPage(
-      title: 'Easy Payment',
-      subtitle: 'Secure and convenient payments',
-      description: 'Pay securely with multiple payment options including cash, card, and digital wallets.',
-      icon: Icons.payment,
+      title: 'Ready to Eat?',
+      subtitle: "Let's get started!",
+      description: 'Sign up or log in to explore delicious food, fast delivery, and real-time order tracking. Your next meal is just a tap away!',
+      icon: Icons.emoji_food_beverage,
       color: Colors.purple,
     ),
   ];
@@ -61,12 +62,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _getStarted() {
-    // TODO: Navigate to main app or login screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Welcome to Mappia! 🎉'),
-        backgroundColor: AppConstants.successColor,
-      ),
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
     );
   }
 
@@ -198,7 +195,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             page.title,
             style: AppConstants.headingStyle.copyWith(
               fontSize: 28,
-              fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
           ),
