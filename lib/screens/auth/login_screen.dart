@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_constants.dart';
 import 'register_screen.dart';
-import '../home/home_screen.dart';
+import '../home/menu_screen.dart';
+import '../home/menu_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final String? initialEmail;
@@ -46,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => HomeScreen(userName: name),
+            builder: (context) => MenuScreen(userName: name),
           ),
         );
       } else {
