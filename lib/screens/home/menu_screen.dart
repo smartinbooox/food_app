@@ -670,17 +670,10 @@ class _MenuScreenState extends State<MenuScreen> {
                                 width: double.infinity,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Order placed successfully!'),
-                                        backgroundColor: Color(0xFFd00000),
-                                      ),
-                                    );
-                                    setState(() {
-                                      _cartItems.clear();
-                                      _cartCount = 0;
+                                    Navigator.pop(context); // Close cart modal first
+                                    Future.delayed(const Duration(milliseconds: 300), () {
+                                      _showCheckoutDetailsModal();
                                     });
-                                    Navigator.pop(context);
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFd00000),
@@ -1118,6 +1111,542 @@ class _MenuScreenState extends State<MenuScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  // Add the new method to show the checkout details modal
+  void _showCheckoutDetailsModal() {
+    String address = '';
+    String paymentMethod = '';
+    String onlinePaymentType = '';
+    final addressController = TextEditingController();
+    String error = ''; // Move error here, outside the builder
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            double totalPrice = _getTotalPrice();
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Stack(
+                children: [
+                  Container(
+                    height: MediaQuery.of(context).size.height * 0.85,
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Checkout Details',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Delivery Address',
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: addressController,
+                          decoration: const InputDecoration(
+                            hintText: 'Enter your delivery address',
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (val) {
+                            setModalState(() {
+                              address = val;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Payment Method',
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Radio<String>(
+                              value: 'Online',
+                              groupValue: paymentMethod,
+                              onChanged: (val) {
+                                setModalState(() {
+                                  paymentMethod = val!;
+                                  onlinePaymentType = '';
+                                });
+                              },
+                            ),
+                            const Text('Online'),
+                            const SizedBox(width: 16),
+                            Radio<String>(
+                              value: 'Cash on Delivery',
+                              groupValue: paymentMethod,
+                              onChanged: (val) {
+                                setModalState(() {
+                                  paymentMethod = val!;
+                                  onlinePaymentType = '';
+                                });
+                              },
+                            ),
+                            const Text('Cash on Delivery'),
+                          ],
+                        ),
+                        if (paymentMethod == 'Online') ...[
+                          const SizedBox(height: 8),
+                          const Text('Select Online Payment Type:', style: TextStyle(fontWeight: FontWeight.w500)),
+                          Wrap(
+                            spacing: 12,
+                            children: [
+                              ChoiceChip(
+                                label: const Text('Card'),
+                                selected: onlinePaymentType == 'Card',
+                                onSelected: (selected) {
+                                  setModalState(() {
+                                    onlinePaymentType = 'Card';
+                                  });
+                                },
+                              ),
+                              ChoiceChip(
+                                label: const Text('Mada'),
+                                selected: onlinePaymentType == 'Mada',
+                                onSelected: (selected) {
+                                  setModalState(() {
+                                    onlinePaymentType = 'Mada';
+                                  });
+                                },
+                              ),
+                              ChoiceChip(
+                                label: const Text('STC Pay'),
+                                selected: onlinePaymentType == 'STC Pay',
+                                onSelected: (selected) {
+                                  setModalState(() {
+                                    onlinePaymentType = 'STC Pay';
+                                  });
+                                },
+                              ),
+                              ChoiceChip(
+                                label: const Text('Bank Transfer'),
+                                selected: onlinePaymentType == 'Bank Transfer',
+                                onSelected: (selected) {
+                                  setModalState(() {
+                                    onlinePaymentType = 'Bank Transfer';
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Order Summary',
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: _cartItems.length,
+                            itemBuilder: (context, index) {
+                              final item = _cartItems[index];
+                              final addOns = item['addOns'] as List<Map<String, dynamic>>? ?? [];
+                              final quantity = item['quantity'] ?? 1;
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                child: ListTile(
+                                  leading: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.asset(
+                                      item['image'],
+                                      width: 48,
+                                      height: 48,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  title: Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      if (addOns.isNotEmpty)
+                                        ...addOns.map((addOn) => Text(
+                                          '+ ${addOn['name']} (SAR ${addOn['price'].toStringAsFixed(2)})',
+                                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                        )),
+                                      Text('Qty: $quantity', style: const TextStyle(fontSize: 12)),
+                                    ],
+                                  ),
+                                  trailing: Text(
+                                    'SAR ${(item['price'] * quantity).toStringAsFixed(2)}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFd00000)),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total:',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              'SAR ${totalPrice.toStringAsFixed(2)}',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFd00000)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (addressController.text.trim().isEmpty) {
+                                setModalState(() {
+                                  error = 'Please enter your delivery address.';
+                                });
+                                return;
+                              }
+                              if (paymentMethod.isEmpty) {
+                                setModalState(() {
+                                  error = 'Please select a payment method.';
+                                });
+                                return;
+                              }
+                              if (paymentMethod == 'Online' && onlinePaymentType.isEmpty) {
+                                setModalState(() {
+                                  error = 'Please select an online payment type.';
+                                });
+                                return;
+                              }
+                              if (paymentMethod == 'Online') {
+                                Navigator.pop(context); // Close checkout modal
+                                Future.delayed(const Duration(milliseconds: 300), () {
+                                  _showOnlinePaymentModal(onlinePaymentType);
+                                });
+                                return;
+                              }
+                              // Cash on Delivery: Place order directly
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Order placed successfully!'),
+                                  backgroundColor: Color(0xFFd00000),
+                                ),
+                              );
+                              setState(() {
+                                _cartItems.clear();
+                                _cartCount = 0;
+                              });
+                              Navigator.of(context).popUntil((route) => route.isFirst);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFd00000),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Place Your Order',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (error.isNotEmpty)
+                    Positioned.fill(
+                      child: Container(
+                        color: Colors.black.withOpacity(0.25), // Dim background
+                        child: Center(
+                          child: Container(
+                            width: 220,
+                            height: 100,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Color(0xFFd00000),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withAlpha((255 * 0.08).round()),
+                                  blurRadius: 6,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Stack(
+                              children: [
+                                Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                    child: Text(
+                                      error,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 4,
+                                  right: 4,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setModalState(() {
+                                        error = '';
+                                      });
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      padding: const EdgeInsets.all(2),
+                                      child: const Icon(Icons.close, size: 18, color: Color(0xFFd00000)),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Add the new method for online payment modal
+  void _showOnlinePaymentModal(String paymentType) {
+    final cardController = TextEditingController();
+    final expiryController = TextEditingController();
+    final cvvController = TextEditingController();
+    final nameController = TextEditingController();
+    bool isProcessing = false;
+    String error = '';
+    final double totalPrice = _getTotalPrice();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.7,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          paymentType == 'Card'
+                              ? 'Card Payment'
+                              : paymentType == 'Mada'
+                                  ? 'Mada Payment'
+                                  : paymentType == 'STC Pay'
+                                      ? 'STC Pay Payment'
+                                      : 'Bank Transfer',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Show total amount to pay
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        'Amount to Pay: SAR ${totalPrice.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFd00000),
+                        ),
+                      ),
+                    ),
+                    if (paymentType == 'Card' || paymentType == 'Mada') ...[
+                      TextField(
+                        controller: cardController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Card Number',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: expiryController,
+                              keyboardType: TextInputType.datetime,
+                              decoration: const InputDecoration(
+                                labelText: 'Expiry (MM/YY)',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: cvvController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'CVV',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Cardholder Name',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ] else if (paymentType == 'STC Pay') ...[
+                      const Text('You will be redirected to STC Pay to complete your payment.', style: TextStyle(fontSize: 16)),
+                      const SizedBox(height: 24),
+                    ] else if (paymentType == 'Bank Transfer') ...[
+                      const Text('Please transfer the total amount to the following bank account:', style: TextStyle(fontSize: 16)),
+                      const SizedBox(height: 12),
+                      const Text('Bank: Mappia Bank\nAccount: 1234567890\nIBAN: SA0000000000000000000000', style: TextStyle(fontSize: 15)),
+                      const SizedBox(height: 24),
+                    ],
+                    if (error.isNotEmpty) ...[
+                      Text(error, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 8),
+                    ],
+                    const Spacer(),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: isProcessing
+                            ? null
+                            : () async {
+                                setModalState(() {
+                                  isProcessing = true;
+                                  error = '';
+                                });
+                                await Future.delayed(const Duration(seconds: 2)); // Simulate payment
+                                // Simulate validation
+                                if (paymentType == 'Card' || paymentType == 'Mada') {
+                                  if (cardController.text.length < 12 || expiryController.text.isEmpty || cvvController.text.length < 3 || nameController.text.isEmpty) {
+                                    setModalState(() {
+                                      error = 'Please enter valid card details.';
+                                      isProcessing = false;
+                                    });
+                                    return;
+                                  }
+                                }
+                                // Simulate random payment failure (10% chance)
+                                if (DateTime.now().millisecondsSinceEpoch % 10 == 0) {
+                                  setModalState(() {
+                                    error = 'Payment failed. Please try again.';
+                                    isProcessing = false;
+                                  });
+                                  return;
+                                }
+                                // Success
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Payment successful! Your order has been placed.'),
+                                    backgroundColor: Color(0xFFd00000),
+                                  ),
+                                );
+                                setState(() {
+                                  _cartItems.clear();
+                                  _cartCount = 0;
+                                });
+                                Navigator.of(context).popUntil((route) => route.isFirst);
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFd00000),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: isProcessing
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : Text(
+                                paymentType == 'STC Pay'
+                                    ? 'Continue to STC Pay'
+                                    : paymentType == 'Bank Transfer'
+                                        ? 'I have transferred'
+                                        : 'Pay Now',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
