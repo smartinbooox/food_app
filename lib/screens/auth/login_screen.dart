@@ -4,6 +4,9 @@ import '../../core/constants/app_constants.dart';
 import 'register_screen.dart';
 import '../home/menu_screen.dart';
 import '../home/menu_screen.dart';
+import '../admin/admin_dashboard_screen.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
   final String? initialEmail;
@@ -34,8 +37,29 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Admin credentials check using SHA-256 hashes
+    const adminEmailHash = '6c14962972acaebaf0b1f73d50afb45b4fdad7c8f0504511e6f1d12f83f32303';
+    const adminPasswordHash = '3ad3387db597655abcf883fb22f4ca5956ce9cbe0584d62d231012ae63736c1e';
+    final inputEmailHash = sha256.convert(utf8.encode(_emailController.text.trim())).toString();
+    final inputPasswordHash = sha256.convert(utf8.encode(_passwordController.text)).toString();
+    if (inputEmailHash == adminEmailHash && inputPasswordHash == adminPasswordHash) {
+      setState(() {
+        _isLoading = false;
+      });
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AdminDashboardScreen(),
+        ),
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
     try {
       final response = await Supabase.instance.client.auth.signInWithPassword(
         email: _emailController.text.trim(),

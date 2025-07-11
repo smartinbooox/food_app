@@ -41,6 +41,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         },
       );
       if (response.user != null) {
+        // Insert into public.users table
+        await Supabase.instance.client.from('users').insert({
+          'id': response.user!.id,
+          'email': _emailController.text.trim(),
+          'name': _nameController.text.trim(),
+          'contact': _contactController.text.trim(),
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Registration successful!')),
         );
