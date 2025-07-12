@@ -4,7 +4,7 @@ import '../../core/constants/app_constants.dart';
 import 'register_screen.dart';
 import '../home/menu_screen.dart';
 import '../home/menu_screen.dart';
-import '../admin/admin_dashboard_screen.dart';
+import '../admin/admin_main_screen.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 
@@ -53,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => AdminDashboardScreen(),
+          builder: (context) => AdminMainScreen(),
         ),
       );
       return;
