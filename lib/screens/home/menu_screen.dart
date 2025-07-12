@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_constants.dart';
 import 'view_all_screen.dart';
+import 'merchant_products_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   final String userName;
@@ -21,71 +22,71 @@ class _MenuScreenState extends State<MenuScreen> {
   ];
 
   final List<Map<String, String>> _foodItems = [
-    {'name': 'Combo Meals', 'image': 'assets/images/Food_image_1.jpg'},
-    {'name': 'Combo Meals', 'image': 'assets/images/food_image_2.jpg'},
+    {'name': 'Beef Bulalo', 'image': 'assets/images/beef_bulalo.jpg'},
+    {'name': 'Chicken Inasal', 'image': 'assets/images/chicken_inasal.jpg'},
     {'name': 'Lumpia', 'image': 'assets/images/Lumpia.jpg'},
-    {'name': 'Burger', 'image': 'assets/images/Burger.jpg'},
-    {'name': 'Fried Chicken', 'image': 'assets/images/friedChicken.jpg'},
-    {'name' : 'Combo Meals', 'image': 'assets/images/food_image_3.jpg'},
-    {'name' : 'Combo Meals', 'image': 'assets/images/food_image_4.jpg'},
-    {'name' : 'Combo Meals', 'image': 'assets/images/food_image_5.jpg'},
+    {'name': 'Beef Sisig', 'image': 'assets/images/beef_sisig.jpg'},
+    {'name': 'Buttered Chicken', 'image': 'assets/images/buttered_chicken.jpg'},
+    {'name' : 'Bangsilog', 'image': 'assets/images/bangsilog.jpg'},
+    {'name' : 'Beef Broccoli', 'image': 'assets/images/beef_broccoli.jpg'},
+    {'name' : 'Halo-halo', 'image': 'assets/images/halo-halo.jpg'},
   ];
 
   final List<Map<String, dynamic>> _recommendedItems = [
     {
-      'name': 'Grilled Chicken Burger',
-      'image': 'assets/images/Burger.jpg',
-      'description': 'Juicy grilled chicken with fresh vegetables and special sauce',
-      'price': 25.50,
+      'name': 'Beef Bulalo',
+      'image': 'assets/images/beef_bulalo.jpg',
+      'description': 'Classic Filipino beef soup with bone marrow',
+      'price': 55.00,
       'isFavorite': false,
     },
     {
-      'name': 'Crispy Fried Chicken',
-      'image': 'assets/images/friedChicken.jpg',
-      'description': 'Golden crispy chicken with herbs and spices',
-      'price': 32.00,
+      'name': 'Buttered Chicken',
+      'image': 'assets/images/buttered_chicken.jpg',
+      'description': 'Crispy fried chicken tossed in butter sauce',
+      'price': 38.00,
       'isFavorite': false,
     },
     {
-      'name': 'Fresh Lumpia',
+      'name': 'Lumpia',
       'image': 'assets/images/Lumpia.jpg',
-      'description': 'Traditional spring rolls with vegetables and meat',
-      'price': 18.75,
+      'description': 'Crispy spring rolls filled with fresh vegetables and meat',
+      'price': 15.00,
       'isFavorite': false,
     },
     {
-      'name': 'Beef Combo Meal',
-      'image': 'assets/images/Food_image_1.jpg',
-      'description': 'Delicious beef burger with fries and drink',
+      'name': 'Beef Sisig',
+      'image': 'assets/images/beef_sisig.jpg',
+      'description': 'Sizzling chopped beef with onions and chili',
       'price': 45.00,
       'isFavorite': false,
     },
     {
-      'name': 'Spicy Chicken Wings',
-      'image': 'assets/images/friedChicken.jpg',
-      'description': 'Hot and spicy wings with dipping sauce',
-      'price': 28.50,
+      'name': 'Chicken Inasal',
+      'image': 'assets/images/chicken_inasal.jpg',
+      'description': 'Juicy grilled chicken marinated in calamansi and annatto oil',
+      'price': 25.00,
       'isFavorite': false,
     },
     {
-      'name': 'Vegetable Spring Rolls',
-      'image': 'assets/images/Lumpia.jpg',
-      'description': 'Fresh vegetables wrapped in rice paper',
-      'price': 16.25,
+      'name': 'Bangsilog',
+      'image': 'assets/images/bangsilog.jpg',
+      'description': 'Crispy fried bangus with garlic rice and sunny-side egg',
+      'price': 25.00,
       'isFavorite': false,
     },
     {
-      'name': 'Double Cheese Burger',
-      'image': 'assets/images/Burger.jpg',
-      'description': 'Double patty with extra cheese and bacon',
-      'price': 38.75,
+      'name': 'Beef Broccoli',
+      'image': 'assets/images/beef_broccoli.jpg',
+      'description': 'Tender beef wok-tossed with crisp broccoli florets',
+      'price': 30.00,
       'isFavorite': false,
     },
     {
-      'name': 'Chicken Rice Bowl',
-      'image': 'assets/images/chickenRice_bowl.jpg',
-      'description': 'Grilled chicken with steamed rice and vegetables',
-      'price': 22.00,
+      'name': 'Halo-halo',
+      'image': 'assets/images/halo-halo.jpg',
+      'description': 'Colorful Filipino dessert with crushed ice and sweet toppings',
+      'price': 15.00,
       'isFavorite': false,
     },
   ];
@@ -119,6 +120,104 @@ class _MenuScreenState extends State<MenuScreen> {
       'price': 38.00,
       'isFavorite': false,
     },
+    {
+      'name': 'Bangsilog',
+      'image': 'assets/images/bangsilog.jpg',
+      'description': 'Crispy fried bangus, garlic rice, and a sunny-side egg — a classic Filipino breakfast that hits the spot any time of day!',
+      'price': 25.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Beef Broccoli',
+      'image': 'assets/images/beef_broccoli.jpg',
+      'description': 'Tender slices of beef wok‑tossed with crisp broccoli florets in a savory garlic‑soy sauce.',
+      'price': 30.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Chicken Inasal',
+      'image': 'assets/images/chicken_inasal.jpg',
+      'description': 'Juicy, grilled chicken marinated in calamansi, garlic, and annatto oil — flame-grilled to smoky perfection.',
+      'price': 25.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Halo-halo',
+      'image': 'assets/images/halo-halo.jpg',
+      'description': 'A colorful Filipino dessert with crushed ice, creamy leche flan, sweet beans, ube, and gulaman — all mixed for the ultimate icy treat!',
+      'price': 15.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Fried Chicken',
+      'image': 'assets/images/fried_chicken_blackpinoy.jpg',
+      'description': 'Crispy on the outside, tender and juicy on the inside — our classic fried chicken is seasoned to perfection and fried golden brown.',
+      'price': 20.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Garlic Fried Rice',
+      'image': 'assets/images/garlic_friedrice.jpg',
+      'description': 'Aromatic rice stir-fried with golden garlic bits — simple, savory, and the perfect pairing for any meal!',
+      'price': 10.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Laing',
+      'image': 'assets/images/Laing.jpg',
+      'description': 'A rich, creamy Bicolano dish made with dried taro leaves simmered in coconut milk, chilies, and spices — earthy, spicy, and unforgettable.',
+      'price': 20.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Leche Flan',
+      'image': 'assets/images/leche_flan.jpg',
+      'description': 'A silky smooth caramel custard made with eggs, milk, and sugar — the perfect sweet ending to any Filipino meal.',
+      'price': 20.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Lomi',
+      'image': 'assets/images/Lomi.jpg',
+      'description': 'Thick egg noodles in a savory, hearty broth loaded with pork, vegetables, and egg — a warm, comforting Filipino favorite best enjoyed hot!',
+      'price': 25.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Pancit Canton',
+      'image': 'assets/images/pancit_canton.jpg',
+      'description': 'Stir-fried egg noodles tossed with vegetables, meat, and a flavorful soy-garlic sauce — a delicious Filipino staple perfect for any celebration!',
+      'price': 20.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Samalamig',
+      'image': 'assets/images/samalamig.jpg',
+      'description': 'A sweet, refreshing Filipino drink made with gulaman, sago, and flavored syrup — perfect to cool you down any time of the day!',
+      'price': 10.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Steamed Siomai',
+      'image': 'assets/images/steamed_siomai.jpg',
+      'description': 'Tender dumplings filled with seasoned meat and vegetables, steamed to juicy perfection — served with soy sauce, calamansi, and chili garlic oil.',
+      'price': 12.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Sweet and Sour Tilapia',
+      'image': 'assets/images/sweet_sour_tilapia.jpg',
+      'description': 'Crispy-fried tilapia topped with a vibrant sweet and sour sauce made with bell peppers, onions, and pineapples — a tangy twist you\'ll crave again and again!',
+      'price': 30.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Tofu Sisig',
+      'image': 'assets/images/tofu_sisig.jpg',
+      'description': 'Sizzling tofu cubes tossed in a creamy, spicy sisig sauce with onions and chili — a guilt-free, flavorful plant-based take on a Filipino favorite.',
+      'price': 18.00,
+      'isFavorite': false,
+    },
   ];
 
   final List<Map<String, dynamic>> _sarapInasalItems = [
@@ -148,6 +247,111 @@ class _MenuScreenState extends State<MenuScreen> {
       'image': 'assets/images/mixed_seafoods.jpg',
       'description': 'Fresh seafood medley with shrimp, fish, and calamari.',
       'price': 55.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Tapsilog',
+      'image': 'assets/images/Tapsilog.jpg',
+      'description': 'Tender beef tapa marinated in sweet and savory spices, served with garlic fried rice and a perfectly cooked sunny-side egg — a classic Filipino all-day breakfast!',
+      'price': 20.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Sinigang Spare Ribs',
+      'image': 'assets/images/sinigang_spare-ribs.jpg',
+      'description': 'A comforting bowl of sour tamarind broth loaded with fall-off-the-bone beef spare ribs, fresh vegetables, and just the right level of tang — the ultimate Filipino comfort food.',
+      'price': 35.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Beef Bulalo',
+      'image': 'assets/images/bulalo_sarap-inasal.jpg',
+      'description': 'A rich, slow-cooked beef shank soup with bone marrow, corn, cabbage, and vegetables — warm, hearty, and perfect for sharing!',
+      'price': 35.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Beef Sisig',
+      'image': 'assets/images/sisig-sarap-inasal.jpg',
+      'description': 'Sizzling chopped beef seasoned with onions, chili, and calamansi — served on a hot plate for that irresistible smoky flavor and crunch!',
+      'price': 30.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Halo-Halo',
+      'image': 'assets/images/Halo-Halo_sarapinasal.jpg',
+      'description': 'A colorful Filipino dessert layered with crushed ice, sweetened fruits, gulaman, leche flan, and ube — topped with evaporated milk for a truly refreshing treat!',
+      'price': 18.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Buttered Chicken',
+      'image': 'assets/images/buttered_chicken-sarapinasal.png',
+      'description': 'Crispy fried chicken glazed in a rich, buttery garlic sauce — savory, sweet, and addictively good with every bite!',
+      'price': 28.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Fried Boneless Bangus',
+      'image': 'assets/images/boneless-bangus.jpg',
+      'description': 'Crispy, golden-fried boneless milkfish seasoned to perfection — flaky, flavorful, and mess-free for an easy, delicious meal.',
+      'price': 25.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Grilled T-bone Steak',
+      'image': 'assets/images/t-bone-steak.jpg',
+      'description': 'Juicy, tender T-bone steak grilled just right, seasoned with herbs and served with your choice of sides — a hearty feast for steak lovers.',
+      'price': 90.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Lomi',
+      'image': 'assets/images/Lomi-sarapinasal.jpg',
+      'description': 'Thick, hearty egg noodles swimming in a rich, savory broth loaded with tender meat, veggies, and egg — the ultimate Filipino comfort soup.',
+      'price': 25.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Milktea',
+      'image': 'assets/images/milktea.jpg',
+      'description': 'Creamy, refreshing milk tea with chewy tapioca pearls — a perfect sweet treat to sip anytime, anywhere.',
+      'price': 15.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Pancit Batil Patung',
+      'image': 'assets/images/pancit_batil_patung.jpg',
+      'description': 'A traditional Filipino noodle dish featuring sautéed vegetables, savory meat strips, and a flavorful sauce — a wholesome, satisfying meal full of local flavors.',
+      'price': 20.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Pancit Palabok',
+      'image': 'assets/images/palabok.jpg',
+      'description': 'Rice noodles topped with a rich, garlicky shrimp sauce, crunchy chicharrón, boiled eggs, and fresh green onions — a classic crowd-pleaser bursting with flavor!',
+      'price': 25.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Filipino Spaghetti',
+      'image': 'assets/images/pinoy_spaghetti.jpg',
+      'description': 'Sweet-style spaghetti loaded with savory ground meat, sliced hotdogs, and a rich, tangy tomato sauce — a Filipino party favorite loved by kids and adults alike.',
+      'price': 20.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Balbacua',
+      'image': 'assets/images/balbacua.jpg',
+      'description': 'Slow-cooked beef stew simmered until tender with rich spices and collagen-rich tendons — a hearty, flavorful dish perfect for meat lovers craving deep Filipino flavors.',
+      'price': 40.00,
+      'isFavorite': false,
+    },
+    {
+      'name': 'Sinigang na Hipon',
+      'image': 'assets/images/sinigang-hipon.jpg',
+      'description': 'A tangy tamarind-based soup loaded with fresh, juicy shrimp and crisp vegetables — a comforting Filipino classic that\'s both flavorful and refreshing.',
+      'price': 28.00,
       'isFavorite': false,
     },
   ];
@@ -839,7 +1043,7 @@ class _MenuScreenState extends State<MenuScreen> {
                         foodItem['description'],
                         style: const TextStyle(
                           fontSize: 16,
-                          color: Colors.grey,
+                          color: Colors.black54,
                           height: 1.5,
                         ),
                       ),
@@ -2124,7 +2328,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                             style: const TextStyle(
                                               fontSize: 10, // Reduced font size
                                               fontWeight: FontWeight.w400,
-                                              color: Colors.grey,
+                                              color: Colors.black54,
                                             ),
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
@@ -2326,10 +2530,13 @@ class _MenuScreenState extends State<MenuScreen> {
                                                 items[index]['image'],
                                                 fit: BoxFit.cover,
                                                 width: double.infinity,
-                                                errorBuilder: (context, error, stackTrace) => Container(
-                                                  color: Colors.grey[200],
-                                                  child: const Center(child: Icon(Icons.broken_image)),
-                                                ),
+                                                errorBuilder: (context, error, stackTrace) {
+                                                  print('Error loading image:  ${items[index]['image']} - $error');
+                                                  return Container(
+                                                    color: Colors.grey[200],
+                                                    child: const Center(child: Icon(Icons.broken_image)),
+                                                  );
+                                                },
                                               ),
                                             ),
                                           ),
@@ -2386,7 +2593,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                                   style: const TextStyle(
                                                     fontSize: 10, // Match recommended section
                                                     fontWeight: FontWeight.w400,
-                                                    color: Colors.grey,
+                                                    color: Colors.black54,
                                                   ),
                                                   maxLines: 2,
                                                   overflow: TextOverflow.ellipsis,
@@ -2449,8 +2656,16 @@ class _MenuScreenState extends State<MenuScreen> {
                           width: MediaQuery.of(context).size.width * 0.6,
                           child: ElevatedButton(
                             onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Show more products pressed!')),
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MerchantProductsScreen(
+                                    merchantName: merchant['name']!,
+                                    items: items,
+                                    cartItems: _cartItems,
+                                    onAddToCart: _addToCart,
+                                  ),
+                                ),
                               );
                             },
                             style: ElevatedButton.styleFrom(
