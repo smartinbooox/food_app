@@ -276,7 +276,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
     return Scaffold(
       backgroundColor: AppConstants.backgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFd00000),
+        backgroundColor: AppConstants.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -285,7 +285,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
           children: [
             // Search bar (moved up, less vertical padding)
             Container(
-              color: const Color(0xFFd00000),
+              color: AppConstants.primaryColor,
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8), // less top/bottom padding
               child: Container(
                 height: 44, // slightly smaller
@@ -304,9 +304,9 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                   controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Search for food...',
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.search,
-                      color: Color(0xFFd00000),
+                      color: AppConstants.primaryColor,
                     ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
@@ -324,7 +324,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
             ),
             // Category pills
             Container(
-              color: const Color(0xFFd00000),
+              color: AppConstants.primaryColor,
               padding: const EdgeInsets.only(bottom: 12), // less bottom padding
               child: SizedBox(
                 height: 40,
@@ -354,7 +354,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                         child: Text(
                           _categories[index],
                           style: TextStyle(
-                            color: isSelected ? const Color(0xFFd00000) : Colors.white,
+                            color: isSelected ? AppConstants.primaryColor : Colors.white,
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
@@ -433,7 +433,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                                       decoration: BoxDecoration(
                                         color: item['merchant'] == 'Black Pinoy' 
                                             ? Colors.black.withAlpha(204)
-                                            : const Color(0xFFd00000).withAlpha(204),
+                                            : AppConstants.primaryColor.withAlpha(204),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
@@ -475,7 +475,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                                           fontWeight: FontWeight.w600,
                                           color: item['merchant'] == 'Black Pinoy' 
                                               ? Colors.black
-                                              : const Color(0xFFd00000),
+                                              : AppConstants.primaryColor,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -499,10 +499,10 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                                         // Price on left
                                         Text(
                                           'SAR ${item['price'].toStringAsFixed(2)}',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 13, // reduced from 14
                                             fontWeight: FontWeight.bold,
-                                            color: Color(0xFFd00000),
+                                            color: AppConstants.primaryColor,
                                           ),
                                         ),
                                         // Rating on right
@@ -554,7 +554,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Added ${addOn['name']} to cart!'),
-          backgroundColor: const Color(0xFFd00000),
+          backgroundColor: AppConstants.primaryColor,
         ),
       );
     }
@@ -703,9 +703,9 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                                   ),
                                   Text(
                                     '+ SAR ${addOn['price'].toStringAsFixed(2)}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
-                                      color: Color(0xFFd00000),
+                                      color: AppConstants.primaryColor,
                                     ),
                                   ),
                                 ],
@@ -721,12 +721,12 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey[100],
-                            foregroundColor: const Color(0xFFd00000),
+                            foregroundColor: AppConstants.primaryColor,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                               side: BorderSide(
-                                color: const Color(0xFFd00000),
+                                color: AppConstants.primaryColor,
                                 width: 1,
                               ),
                             ),
@@ -757,10 +757,10 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                               ),
                               Text(
                                 'SAR ${totalPrice.toStringAsFixed(2)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFFd00000),
+                                  color: AppConstants.primaryColor,
                                 ),
                               ),
                             ],
@@ -771,13 +771,13 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Added ${foodItem['name']} to cart!'),
-                                  backgroundColor: const Color(0xFFd00000),
+                                  backgroundColor: AppConstants.primaryColor,
                                 ),
                               );
                               Navigator.of(context).popUntil((route) => route.isFirst);
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFd00000),
+                              backgroundColor: AppConstants.primaryColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -873,7 +873,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFd00000),
+                    backgroundColor: AppConstants.primaryColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -910,7 +910,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
           child: Icon(
             category == 'Dessert' ? Icons.cake : 
             category == 'Drink' ? Icons.local_drink : Icons.fastfood,
-            color: const Color(0xFFd00000),
+            color: AppConstants.primaryColor,
           ),
         ),
         title: Text(
@@ -925,9 +925,9 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
           children: [
             Text(
               'SAR ${price.toStringAsFixed(2)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFd00000),
+                color: AppConstants.primaryColor,
               ),
             ),
             const SizedBox(width: 8),
@@ -938,7 +938,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFd00000),
+                  color: AppConstants.primaryColor,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(

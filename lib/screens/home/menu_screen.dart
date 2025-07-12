@@ -1678,7 +1678,7 @@ class _MenuScreenState extends State<MenuScreen> {
                               AppConstants.borderRadiusMedium,
                             ),
                             border: Border.all(
-                              color: const Color(0xFFd00000),
+                              color: AppConstants.primaryColor,
                               width: 1,
                             ),
                             boxShadow: [
@@ -2483,14 +2483,14 @@ class _MenuScreenState extends State<MenuScreen> {
         ),
       ),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFd00000),
+        decoration: BoxDecoration(
+          color: AppConstants.primaryColor,
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: _onNavigationTapped,
           type: BottomNavigationBarType.fixed,
-          backgroundColor: const Color(0xFFd00000),
+          backgroundColor: AppConstants.primaryColor,
           selectedItemColor: Colors.white,
           unselectedItemColor: Colors.white.withAlpha((255 * 0.7).round()),
           elevation: 0,
