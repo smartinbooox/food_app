@@ -41,25 +41,10 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    // Admin credentials check using SHA-256 hashes
-    const adminEmailHash = '6c14962972acaebaf0b1f73d50afb45b4fdad7c8f0504511e6f1d12f83f32303';
-    const adminPasswordHash = '3ad3387db597655abcf883fb22f4ca5956ce9cbe0584d62d231012ae63736c1e';
-    final inputEmailHash = sha256.convert(utf8.encode(_emailController.text.trim())).toString();
-    final inputPasswordHash = sha256.convert(utf8.encode(_passwordController.text)).toString();
-    if (inputEmailHash == adminEmailHash && inputPasswordHash == adminPasswordHash) {
-      setState(() {
-        _isLoading = false;
-      });
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => AdminMainScreen(),
-        ),
-      );
+    if (!_formKey.currentState!.validate()) {
+      setState(() => _isLoading = false);
       return;
     }
-
-    if (!_formKey.currentState!.validate()) return;
     try {
       final response = await Supabase.instance.client.auth.signInWithPassword(
         email: _emailController.text.trim(),
@@ -67,13 +52,36 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       if (response.user != null) {
         final user = response.user!;
-        final name = user.userMetadata?['name'] as String? ?? user.email ?? '';
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MenuScreen(userName: name),
-          ),
-        );
+        // Fetch role from users table
+        final userData = await Supabase.instance.client
+            .from('users')
+            .select('role, name')
+            .eq('id', user.id)
+            .single();
+        if (userData == null || userData['role'] == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User role not found. Contact support.')),
+          );
+          setState(() => _isLoading = false);
+          return;
+        }
+        final role = userData['role'] as String;
+        final name = userData['name'] as String? ?? user.email ?? '';
+        if (role == 'admin') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AdminMainScreen(),
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MenuScreen(userName: name),
+            ),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login failed.')),
@@ -81,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(content: Text('Error:  [31m${e.toString()} [0m')),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);

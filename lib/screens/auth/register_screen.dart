@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_constants.dart';
 import 'login_screen.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -41,12 +43,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         },
       );
       if (response.user != null) {
-        // Insert into public.users table
+        // Hash the password before storing in users table
+        final hashedPassword = sha256.convert(utf8.encode(_passwordController.text)).toString();
         await Supabase.instance.client.from('users').insert({
           'id': response.user!.id,
           'email': _emailController.text.trim(),
+          'password': hashedPassword, // Store hashed password
           'name': _nameController.text.trim(),
           'contact': _contactController.text.trim(),
+          'role': 'customer',
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Registration successful!')),

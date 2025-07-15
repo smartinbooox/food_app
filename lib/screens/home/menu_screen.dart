@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_constants.dart';
 import 'view_all_screen.dart';
 import 'merchant_products_screen.dart';
+import '../auth/login_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MenuScreen extends StatefulWidget {
   final String userName;
@@ -616,29 +618,29 @@ class _MenuScreenState extends State<MenuScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            const Center(
+            Center(
               child: Column(
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundColor: Colors.grey,
+                    backgroundColor: AppConstants.primaryColor,
                     child: Icon(
                       Icons.person,
                       size: 50,
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
-                    'Guest User',
-                    style: TextStyle(
+                    widget.userName,
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'guest@example.com',
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Mappia User',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey,
@@ -648,25 +650,93 @@ class _MenuScreenState extends State<MenuScreen> {
               ),
             ),
             const SizedBox(height: 30),
-            const ListTile(
-              leading: Icon(Icons.settings),
-              title: Text('Settings'),
-              trailing: Icon(Icons.arrow_forward_ios),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Settings'),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Settings coming soon!')),
+                );
+              },
             ),
-            const ListTile(
-              leading: Icon(Icons.help),
-              title: Text('Help & Support'),
-              trailing: Icon(Icons.arrow_forward_ios),
+            ListTile(
+              leading: const Icon(Icons.help),
+              title: const Text('Help & Support'),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Help & Support coming soon!')),
+                );
+              },
             ),
-            const ListTile(
-              leading: Icon(Icons.logout),
-              title: Text('Logout'),
-              trailing: Icon(Icons.arrow_forward_ios),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout', style: TextStyle(color: Colors.red)),
+              trailing: const Icon(Icons.arrow_forward_ios, color: Colors.red),
+              onTap: () {
+                Navigator.pop(context);
+                _showLogoutConfirmation();
+              },
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _showLogoutConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Are you sure you want to logout?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _performLogout();
+              },
+              child: const Text('Logout', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _performLogout() async {
+    try {
+      await Supabase.instance.client.auth.signOut();
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Logged out successfully!'),
+            backgroundColor: AppConstants.primaryColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error logging out: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _showCartPage() {
@@ -778,7 +848,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                                       ),
                                                       Text(
                                                         'SAR ${addOn['price'].toStringAsFixed(2)}',
-                                                        style: const TextStyle(fontSize: 13, color: Color(0xFFd00000)),
+                                                        style: TextStyle(fontSize: 13, color: AppConstants.primaryColor),
                                                       ),
                                                     ],
                                                   )).toList(),
@@ -787,8 +857,8 @@ class _MenuScreenState extends State<MenuScreen> {
                                             const SizedBox(height: 4),
                                             Text(
                                               'SAR ${item['price'].toStringAsFixed(2)}',
-                                              style: const TextStyle(
-                                                color: Color(0xFFd00000),
+                                              style: TextStyle(
+                                                color: AppConstants.primaryColor,
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
@@ -811,7 +881,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                               setModalState(() {});
                                             },
                                             icon: const Icon(Icons.remove_circle_outline),
-                                            color: const Color(0xFFd00000),
+                                            color: AppConstants.primaryColor,
                                           ),
                                           Text(
                                             '$quantity',
@@ -829,7 +899,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                               setModalState(() {});
                                             },
                                             icon: const Icon(Icons.add_circle_outline),
-                                            color: const Color(0xFFd00000),
+                                            color: AppConstants.primaryColor,
                                           ),
                                         ],
                                       ),
@@ -864,7 +934,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFFd00000),
+                                      color: AppConstants.primaryColor,
                                     ),
                                   ),
                                 ],
@@ -880,7 +950,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                     });
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFd00000),
+                                    backgroundColor: AppConstants.primaryColor,
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(vertical: 16),
                                     shape: RoundedRectangleBorder(
@@ -922,7 +992,7 @@ class _MenuScreenState extends State<MenuScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Added ${addOn['name']} to cart!'),
-          backgroundColor: const Color(0xFFd00000),
+          backgroundColor: AppConstants.primaryColor,
         ),
       );
     }
@@ -1085,12 +1155,12 @@ class _MenuScreenState extends State<MenuScreen> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey[100],
-                            foregroundColor: const Color(0xFFd00000),
+                            foregroundColor: AppConstants.primaryColor,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                               side: BorderSide(
-                                color: const Color(0xFFd00000),
+                                color: AppConstants.primaryColor,
                                 width: 1,
                               ),
                             ),
@@ -1124,7 +1194,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFFd00000),
+                                  color: AppConstants.primaryColor,
                                 ),
                               ),
                             ],
@@ -1135,7 +1205,7 @@ class _MenuScreenState extends State<MenuScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Added ${foodItem['name']} to cart!'),
-                                  backgroundColor: const Color(0xFFd00000),
+                                  backgroundColor: AppConstants.primaryColor,
                                 ),
                               );
                               Navigator.of(context).popUntil((route) => route.isFirst);
@@ -1237,7 +1307,7 @@ class _MenuScreenState extends State<MenuScreen> {
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFd00000),
+                    backgroundColor: AppConstants.primaryColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -1274,7 +1344,7 @@ class _MenuScreenState extends State<MenuScreen> {
           child: Icon(
             category == 'Dessert' ? Icons.cake : 
             category == 'Drink' ? Icons.local_drink : Icons.fastfood,
-            color: const Color(0xFFd00000),
+            color: AppConstants.primaryColor,
           ),
         ),
         title: Text(
@@ -1289,9 +1359,9 @@ class _MenuScreenState extends State<MenuScreen> {
           children: [
             Text(
               'SAR ${price.toStringAsFixed(2)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFd00000),
+                color: AppConstants.primaryColor,
               ),
             ),
             const SizedBox(width: 8),
@@ -1302,7 +1372,7 @@ class _MenuScreenState extends State<MenuScreen> {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFd00000),
+                  color: AppConstants.primaryColor,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -1498,7 +1568,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                   ),
                                   trailing: Text(
                                     'SAR ${(item['price'] * quantity).toStringAsFixed(2)}',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFd00000)),
+                                    style: TextStyle(fontWeight: FontWeight.bold, color: AppConstants.primaryColor),
                                   ),
                                 ),
                               );
@@ -1515,7 +1585,7 @@ class _MenuScreenState extends State<MenuScreen> {
                             ),
                             Text(
                               'SAR ${totalPrice.toStringAsFixed(2)}',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFd00000)),
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppConstants.primaryColor),
                             ),
                           ],
                         ),
@@ -1553,7 +1623,7 @@ class _MenuScreenState extends State<MenuScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Order placed successfully!'),
-                                  backgroundColor: Color(0xFFd00000),
+                                  backgroundColor: AppConstants.primaryColor,
                                 ),
                               );
                               setState(() {
@@ -1563,7 +1633,7 @@ class _MenuScreenState extends State<MenuScreen> {
                               Navigator.of(context).popUntil((route) => route.isFirst);
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFd00000),
+                              backgroundColor: AppConstants.primaryColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
@@ -1589,7 +1659,7 @@ class _MenuScreenState extends State<MenuScreen> {
                             height: 100,
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              color: Color(0xFFd00000),
+                              color: AppConstants.primaryColor,
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
@@ -1808,7 +1878,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text('Payment successful! Your order has been placed.'),
-                                    backgroundColor: Color(0xFFd00000),
+                                    backgroundColor: AppConstants.primaryColor,
                                   ),
                                 );
                                 setState(() {
@@ -1897,9 +1967,9 @@ class _MenuScreenState extends State<MenuScreen> {
                             controller: _locationController,
                             decoration: InputDecoration(
                               hintText: 'Enter your location',
-                              prefixIcon: const Icon(
+                              prefixIcon: Icon(
                                 Icons.location_on_outlined,
-                                color: Color(0xFFd00000),
+                                color: AppConstants.primaryColor,
                               ),
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(
@@ -1920,9 +1990,9 @@ class _MenuScreenState extends State<MenuScreen> {
                         child: CircleAvatar(
                           radius: 20,
                           backgroundColor: Colors.white,
-                          child: const Icon(
+                          child: Icon(
                             Icons.person,
-                            color: Color(0xFFd00000),
+                            color: AppConstants.primaryColor,
                           ),
                         ),
                       ),
@@ -1938,7 +2008,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: const Color(0xFFd00000),
+                                  color: AppConstants.primaryColor,
                                   width: 1,
                                 ),
                                 boxShadow: [
@@ -2296,7 +2366,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                                 ? Icons.favorite 
                                                 : Icons.favorite_border,
                                             size: 16,
-                                            color: const Color(0xFFd00000),
+                                            color: AppConstants.primaryColor,
                                           ),
                                         ),
                                       ),
@@ -2345,7 +2415,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                                 style: const TextStyle(
                                                   fontSize: 12, // Reduced font size
                                                   fontWeight: FontWeight.w700,
-                                                  color: Color(0xFFd00000),
+                                                  color: AppConstants.primaryColor,
                                                 ),
                                                 overflow: TextOverflow.ellipsis,
                                               ),
@@ -2358,14 +2428,14 @@ class _MenuScreenState extends State<MenuScreen> {
                                                 ScaffoldMessenger.of(context).showSnackBar(
                                                   SnackBar(
                                                     content: Text('${_recommendedItems[index]['name']} added to cart!'),
-                                                    backgroundColor: const Color(0xFFd00000),
+                                                    backgroundColor: AppConstants.primaryColor,
                                                   ),
                                                 );
                                               },
                                               child: Container(
                                                 padding: const EdgeInsets.all(4),
                                                 decoration: BoxDecoration(
-                                                  color: const Color(0xFFd00000),
+                                                  color: AppConstants.primaryColor,
                                                   shape: BoxShape.circle,
                                                 ),
                                                 child: const Icon(
@@ -2401,7 +2471,7 @@ class _MenuScreenState extends State<MenuScreen> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFFd00000),
+                            color: AppConstants.primaryColor,
                           ),
                         ),
                       ),
@@ -2533,8 +2603,8 @@ class _MenuScreenState extends State<MenuScreen> {
                                                 errorBuilder: (context, error, stackTrace) {
                                                   print('Error loading image:  ${items[index]['image']} - $error');
                                                   return Container(
-                                                    color: Colors.grey[200],
-                                                    child: const Center(child: Icon(Icons.broken_image)),
+                                                  color: Colors.grey[200],
+                                                  child: const Center(child: Icon(Icons.broken_image)),
                                                   );
                                                 },
                                               ),
@@ -2563,7 +2633,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                                       ? Icons.favorite 
                                                       : Icons.favorite_border,
                                                   size: 16,
-                                                  color: const Color(0xFFd00000),
+                                                  color: AppConstants.primaryColor,
                                                 ),
                                               ),
                                             ),
@@ -2608,7 +2678,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                                       style: const TextStyle(
                                                         fontSize: 12, // Match recommended section
                                                         fontWeight: FontWeight.w700,
-                                                        color: Color(0xFFd00000),
+                                                        color: AppConstants.primaryColor,
                                                       ),
                                                       overflow: TextOverflow.ellipsis,
                                                     ),
@@ -2620,14 +2690,14 @@ class _MenuScreenState extends State<MenuScreen> {
                                                       ScaffoldMessenger.of(context).showSnackBar(
                                                         SnackBar(
                                                           content: Text('${items[index]['name']} added to cart!'),
-                                                          backgroundColor: const Color(0xFFd00000),
+                                                          backgroundColor: AppConstants.primaryColor,
                                                         ),
                                                       );
                                                     },
                                                     child: Container(
                                                       padding: const EdgeInsets.all(4),
                                                       decoration: BoxDecoration(
-                                                        color: const Color(0xFFd00000),
+                                                        color: AppConstants.primaryColor,
                                                         shape: BoxShape.circle,
                                                       ),
                                                       child: const Icon(
@@ -2669,7 +2739,7 @@ class _MenuScreenState extends State<MenuScreen> {
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFd00000),
+                              backgroundColor: AppConstants.primaryColor,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(25),

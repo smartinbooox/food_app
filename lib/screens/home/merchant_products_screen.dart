@@ -32,7 +32,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Added ${addOn['name']} to cart!'),
-          backgroundColor: const Color(0xFFd00000),
+          backgroundColor: AppConstants.primaryColor,
         ),
       );
     }
@@ -179,7 +179,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                                     '+ SAR ${addOn['price'].toStringAsFixed(2)}',
                                     style: const TextStyle(
                                       fontSize: 14,
-                                      color: Color(0xFFd00000),
+                                      color: AppConstants.primaryColor,
                                     ),
                                   ),
                                 ],
@@ -195,12 +195,12 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey[100],
-                            foregroundColor: const Color(0xFFd00000),
+                            foregroundColor: AppConstants.primaryColor,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                               side: BorderSide(
-                                color: const Color(0xFFd00000),
+                                color: AppConstants.primaryColor,
                                 width: 1,
                               ),
                             ),
@@ -234,7 +234,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFFd00000),
+                                  color: AppConstants.primaryColor,
                                 ),
                               ),
                             ],
@@ -245,13 +245,13 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Added ${foodItem['name']} to cart!'),
-                                  backgroundColor: const Color(0xFFd00000),
+                                  backgroundColor: AppConstants.primaryColor,
                                 ),
                               );
                               Navigator.of(context).popUntil((route) => route.isFirst);
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFd00000),
+                              backgroundColor: AppConstants.primaryColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -347,7 +347,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFd00000),
+                    backgroundColor: AppConstants.primaryColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -384,7 +384,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
           child: Icon(
             category == 'Dessert' ? Icons.cake : 
             category == 'Drink' ? Icons.local_drink : Icons.fastfood,
-            color: const Color(0xFFd00000),
+            color: AppConstants.primaryColor,
           ),
         ),
         title: Text(
@@ -401,7 +401,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
               'SAR ${price.toStringAsFixed(2)}',
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFd00000),
+                color: AppConstants.primaryColor,
               ),
             ),
             const SizedBox(width: 8),
@@ -412,7 +412,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFd00000),
+                  color: AppConstants.primaryColor,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -434,7 +434,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
       backgroundColor: AppConstants.backgroundColor,
       appBar: AppBar(
         title: Text('${widget.merchantName} Products'),
-        backgroundColor: const Color(0xFFd00000),
+        backgroundColor: AppConstants.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -529,7 +529,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFFd00000),
+                                  color: AppConstants.primaryColor,
                                 ),
                               ),
                               GestureDetector(
@@ -538,14 +538,14 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text('${widget.items[index]['name']} added to cart!'),
-                                      backgroundColor: const Color(0xFFd00000),
+                                      backgroundColor: AppConstants.primaryColor,
                                     ),
                                   );
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFd00000),
+                                    color: AppConstants.primaryColor,
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
