@@ -1,4 +1,4 @@
 class EnvConstants {
-  static const String supabaseUrl = 'https://lgpuwnimdrwveuuztcjf.supabase.co';
-  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxncHV3bmltZHJ3dmV1dXp0Y2pmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3ODUyNDQsImV4cCI6MjA2NzM2MTI0NH0.Pea7UcDPkpNCVXQLX-A6yn_wFlIv-C47lJkdrantFfA';
+  static const String supabaseUrl = 'https://cfwfwbzretnuojglqnds.supabase.co';
+  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmd2Z3YnpyZXRudW9qZ2xxbmRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MzEyODgsImV4cCI6MjA2ODIwNzI4OH0.8oaG7-m9H5R18sc90BiJ89EHGPvXgjEHNmhdS7Y3rtE';
 } 
