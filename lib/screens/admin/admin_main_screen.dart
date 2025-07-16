@@ -13,32 +13,13 @@ class AdminMainScreen extends StatefulWidget {
   State<AdminMainScreen> createState() => _AdminMainScreenState();
 }
 
-class _ManageScreen extends StatelessWidget {
-  const _ManageScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Foods'),
-        backgroundColor: const Color(0xFF800000),
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: const Center(
-        child: Text('Manage Foods Placeholder'),
-      ),
-    );
-  }
-}
-
 class _AdminMainScreenState extends State<AdminMainScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
     const AdminDashboardScreen(),
     const _ReportScreen(),
-    const _ManageScreen(), // New Manage tab
+    const _ManageScreen(),
     const _SettingsScreen(),
   ];
 
@@ -85,7 +66,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
                 label: '',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.assignment), // Clipboard icon for Manage
+                icon: Icon(Icons.assignment),
                 label: '',
               ),
               BottomNavigationBarItem(
@@ -95,6 +76,170 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ManageScreen extends StatefulWidget {
+  const _ManageScreen();
+
+  @override
+  State<_ManageScreen> createState() => _ManageScreenState();
+}
+
+class _ManageScreenState extends State<_ManageScreen> {
+  File? _selectedImage;
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
+  bool _isUploading = false;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<String?> _uploadImage(File image) async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) throw Exception('Not authenticated');
+      final fileName =
+          'food_${DateTime.now().millisecondsSinceEpoch}_${path.basename(image.path)}';
+      // This will throw if it fails, or return a String (file path) if successful
+      await Supabase.instance.client.storage
+          .from('food-images')
+          .upload(fileName, image);
+      final publicUrl = Supabase.instance.client.storage
+          .from('food-images')
+          .getPublicUrl(fileName);
+      return publicUrl;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image upload failed: \\${e.toString()}'), backgroundColor: Colors.red),
+      );
+      return null;
+    }
+  }
+
+  Future<void> _addFood() async {
+    if (!_formKey.currentState!.validate() || _selectedImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields and select an image'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+    setState(() => _isUploading = true);
+    final imageUrl = await _uploadImage(_selectedImage!);
+    if (imageUrl == null) {
+      setState(() => _isUploading = false);
+      return;
+    }
+    final user = Supabase.instance.client.auth.currentUser;
+    final response = await Supabase.instance.client.from('foods').insert({
+      'name': _nameController.text.trim(),
+      'description': _descController.text.trim(),
+      'price': double.tryParse(_priceController.text.trim()) ?? 0.0,
+      'image_url': imageUrl,
+      'created_by': user?.id,
+    });
+    setState(() => _isUploading = false);
+    if (response.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add food: \\${response.error!.message}'), backgroundColor: Colors.red),
+      );
+    } else {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Food added successfully!'), backgroundColor: Color(0xFF800000)),
+      );
+      _nameController.clear();
+      _descController.clear();
+      _priceController.clear();
+      setState(() => _selectedImage = null);
+    }
+  }
+
+  void _showAddFoodDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add Food'),
+          content: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                    validator: (v) => v == null || v.isEmpty ? 'Enter name' : null,
+                  ),
+                  TextFormField(
+                    controller: _descController,
+                    decoration: const InputDecoration(labelText: 'Description'),
+                    validator: (v) => v == null || v.isEmpty ? 'Enter description' : null,
+                  ),
+                  TextFormField(
+                    controller: _priceController,
+                    decoration: const InputDecoration(labelText: 'Price'),
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    validator: (v) => v == null || v.isEmpty ? 'Enter price' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: _selectedImage == null
+                        ? Container(
+                            height: 100,
+                            width: 100,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+                          )
+                        : Image.file(_selectedImage!, height: 100, width: 100, fit: BoxFit.cover),
+                  ),
+                  const SizedBox(height: 12),
+                  _isUploading
+                      ? const CircularProgressIndicator()
+                      : ElevatedButton(
+                          onPressed: _addFood,
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF800000)),
+                          child: const Text('Add Food'),
+                        ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Manage Foods'),
+        backgroundColor: const Color(0xFF800000),
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: const Center(
+        child: Text('Manage Foods Placeholder'),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddFoodDialog,
+        backgroundColor: const Color(0xFF800000),
+        child: const Icon(Icons.add),
+        tooltip: 'Add Food',
       ),
     );
   }
