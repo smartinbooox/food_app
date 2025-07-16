@@ -56,3 +56,4 @@ CREATE TABLE IF NOT EXISTS images (
 -- =====================
 -- (Add more tables below as needed, e.g., orders, products, etc.)
 
+ 

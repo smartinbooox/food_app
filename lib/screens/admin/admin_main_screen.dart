@@ -13,74 +13,6 @@ class AdminMainScreen extends StatefulWidget {
   State<AdminMainScreen> createState() => _AdminMainScreenState();
 }
 
-class _AdminMainScreenState extends State<AdminMainScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = [
-    const AdminDashboardScreen(),
-    const _ReportScreen(),
-    const _ManageScreen(),
-    const _SettingsScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(25),
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
-            selectedItemColor: const Color(0xFF800000),
-            unselectedItemColor: Colors.grey,
-            selectedLabelStyle: const TextStyle(fontSize: 0),
-            unselectedLabelStyle: const TextStyle(fontSize: 0),
-            elevation: 0,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.assessment),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.assignment),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.settings),
-                label: '',
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _ManageScreen extends StatefulWidget {
   const _ManageScreen();
 
@@ -89,80 +21,28 @@ class _ManageScreen extends StatefulWidget {
 }
 
 class _ManageScreenState extends State<_ManageScreen> {
-  File? _selectedImage;
-  final _formKey = GlobalKey<FormState>();
+  // Controllers for dialog fields
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+  XFile? _pickedImage;
   bool _isUploading = false;
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    _priceController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
       setState(() {
-        _selectedImage = File(pickedFile.path);
+        _pickedImage = image;
       });
-    }
-  }
-
-  Future<String?> _uploadImage(File image) async {
-    try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user == null) throw Exception('Not authenticated');
-      final fileName =
-          'food_${DateTime.now().millisecondsSinceEpoch}_${path.basename(image.path)}';
-      // This will throw if it fails, or return a String (file path) if successful
-      await Supabase.instance.client.storage
-          .from('food-images')
-          .upload(fileName, image);
-      final publicUrl = Supabase.instance.client.storage
-          .from('food-images')
-          .getPublicUrl(fileName);
-      return publicUrl;
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Image upload failed: \\${e.toString()}'), backgroundColor: Colors.red),
-      );
-      return null;
-    }
-  }
-
-  Future<void> _addFood() async {
-    if (!_formKey.currentState!.validate() || _selectedImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields and select an image'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-    setState(() => _isUploading = true);
-    final imageUrl = await _uploadImage(_selectedImage!);
-    if (imageUrl == null) {
-      setState(() => _isUploading = false);
-      return;
-    }
-    final user = Supabase.instance.client.auth.currentUser;
-    final response = await Supabase.instance.client.from('foods').insert({
-      'name': _nameController.text.trim(),
-      'description': _descController.text.trim(),
-      'price': double.tryParse(_priceController.text.trim()) ?? 0.0,
-      'image_url': imageUrl,
-      'created_by': user?.id,
-    });
-    setState(() => _isUploading = false);
-    if (response.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add food: \\${response.error!.message}'), backgroundColor: Colors.red),
-      );
-    } else {
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Food added successfully!'), backgroundColor: Color(0xFF800000)),
-      );
-      _nameController.clear();
-      _descController.clear();
-      _priceController.clear();
-      setState(() => _selectedImage = null);
     }
   }
 
@@ -170,54 +50,79 @@ class _ManageScreenState extends State<_ManageScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Add Food'),
-          content: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Name'),
-                    validator: (v) => v == null || v.isEmpty ? 'Enter name' : null,
-                  ),
-                  TextFormField(
-                    controller: _descController,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                    validator: (v) => v == null || v.isEmpty ? 'Enter description' : null,
-                  ),
-                  TextFormField(
-                    controller: _priceController,
-                    decoration: const InputDecoration(labelText: 'Price'),
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    validator: (v) => v == null || v.isEmpty ? 'Enter price' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: _selectedImage == null
-                        ? Container(
-                            height: 100,
-                            width: 100,
-                            color: Colors.grey[200],
-                            child: const Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Add Food'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(labelText: 'Name'),
+                    ),
+                    TextField(
+                      controller: _descController,
+                      decoration: const InputDecoration(labelText: 'Description'),
+                    ),
+                    TextField(
+                      controller: _priceController,
+                      decoration: const InputDecoration(labelText: 'Price'),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    ),
+                    const SizedBox(height: 12),
+                    _pickedImage == null
+                        ? TextButton.icon(
+                            onPressed: () async {
+                              await _pickImage();
+                              setState(() {});
+                            },
+                            icon: const Icon(Icons.image),
+                            label: const Text('Pick Image'),
                           )
-                        : Image.file(_selectedImage!, height: 100, width: 100, fit: BoxFit.cover),
-                  ),
-                  const SizedBox(height: 12),
-                  _isUploading
-                      ? const CircularProgressIndicator()
-                      : ElevatedButton(
-                          onPressed: _addFood,
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF800000)),
-                          child: const Text('Add Food'),
-                        ),
-                ],
+                        : Column(
+                            children: [
+                              Image.file(
+                                File(_pickedImage!.path),
+                                height: 100,
+                                fit: BoxFit.cover,
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _pickedImage = null;
+                                  });
+                                },
+                                child: const Text('Remove Image'),
+                              ),
+                            ],
+                          ),
+                  ],
+                ),
               ),
-            ),
-          ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: _isUploading ? null : () {
+                    // Upload logic will go here
+                  },
+                  child: _isUploading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Add'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -402,6 +307,75 @@ class _SettingsScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// Restore the _AdminMainScreenState class
+class _AdminMainScreenState extends State<AdminMainScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = [
+    const AdminDashboardScreen(),
+    const _ReportScreen(),
+    const _ManageScreen(), // Manage tab
+    const _SettingsScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _screens[_currentIndex],
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(25),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.white,
+            selectedItemColor: const Color(0xFF800000),
+            unselectedItemColor: Colors.grey,
+            selectedLabelStyle: const TextStyle(fontSize: 0),
+            unselectedLabelStyle: const TextStyle(fontSize: 0),
+            elevation: 0,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.assessment),
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.assignment), // Clipboard icon for Manage
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings),
+                label: '',
+              ),
+            ],
+          ),
         ),
       ),
     );

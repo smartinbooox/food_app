@@ -4,6 +4,7 @@ import '../../core/constants/app_constants.dart';
 import 'login_screen.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
+import 'package:uuid/uuid.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -30,49 +31,47 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  // Add this email validation function to the _RegisterScreenState class
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    return emailRegex.hasMatch(email);
+  }
+
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
-      final response = await Supabase.instance.client.auth.signUp(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        data: {
-          'name': _nameController.text.trim(),
-          'contact': _contactController.text.trim(),
-        },
+      final email = _emailController.text.trim();
+      final name = _nameController.text.trim();
+      final contact = _contactController.text.trim();
+      final password = _passwordController.text;
+      final hashedPassword = sha256.convert(utf8.encode(password)).toString();
+      final uuid = Uuid();
+      final customerId = uuid.v4();
+      // Insert customer directly into users table
+      await Supabase.instance.client.from('users').insert({
+        'id': customerId,
+        'email': email,
+        'password': hashedPassword,
+        'name': name,
+        'contact': contact,
+        'role': 'customer',
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Registration successful!')),
       );
-      if (response.user != null) {
-        // Hash the password before storing in users table
-        final hashedPassword = sha256.convert(utf8.encode(_passwordController.text)).toString();
-        await Supabase.instance.client.from('users').insert({
-          'id': response.user!.id,
-          'email': _emailController.text.trim(),
-          'password': hashedPassword, // Store hashed password
-          'name': _nameController.text.trim(),
-          'contact': _contactController.text.trim(),
-          'role': 'customer',
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration successful!')),
-        );
-        _nameController.clear();
-        _emailController.clear();
-        _passwordController.clear();
-        _contactController.clear();
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LoginScreen(
-              initialEmail: _emailController.text.trim(),
-            ),
+      _nameController.clear();
+      _emailController.clear();
+      _passwordController.clear();
+      _contactController.clear();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LoginScreen(
+            initialEmail: email,
           ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration failed.')),
-        );
-      }
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
@@ -154,6 +153,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your email';
+                                }
+                                final trimmed = value.trim();
+                                if (!_isValidEmail(trimmed)) {
+                                  return 'Please enter a valid email address';
                                 }
                                 return null;
                               },
