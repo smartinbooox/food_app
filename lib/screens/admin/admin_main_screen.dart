@@ -21,39 +21,79 @@ class _ManageScreen extends StatefulWidget {
 }
 
 class _ManageScreenState extends State<_ManageScreen> {
-  // Controllers for dialog fields
+  // Add a GlobalKey for the ScaffoldMessenger
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   XFile? _pickedImage;
   bool _isUploading = false;
 
+  List<Map<String, dynamic>> _foods = [];
+  bool _isLoadingFoods = false;
+  String? _userId;
+
   @override
-  void dispose() {
-    _nameController.dispose();
-    _descController.dispose();
-    _priceController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _fetchCurrentUserId();
   }
 
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
+  Future<void> _fetchCurrentUserId() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
       setState(() {
-        _pickedImage = image;
+        _userId = user.id;
       });
+      _fetchFoods();
     }
   }
 
-  void _showAddFoodDialog() {
-    showDialog(
+  Future<void> _fetchFoods() async {
+    if (_userId == null) return;
+    setState(() => _isLoadingFoods = true);
+    final response = await Supabase.instance.client
+        .from('foods')
+        .select()
+        .eq('created_by', _userId!)
+        .order('created_at', ascending: false);
+    setState(() {
+      _foods = List<Map<String, dynamic>>.from(response as List);
+      _isLoadingFoods = false;
+    });
+  }
+
+  Future<String?> _uploadImage(XFile image) async {
+    final fileExt = image.path.split('.').last;
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final filePath = 'foods/$fileName';
+    final bytes = await image.readAsBytes();
+    final response = await Supabase.instance.client.storage
+        .from('images')
+        .uploadBinary(filePath, bytes, fileOptions: const FileOptions(upsert: true));
+    if (response != null && response is String) {
+      final publicUrl = Supabase.instance.client.storage
+          .from('images')
+          .getPublicUrl(filePath);
+      return publicUrl;
+    }
+    return null;
+  }
+
+  // Change _showAddOrEditFoodDialog to return a Future<bool?>
+  Future<bool?> _showAddOrEditFoodDialog({Map<String, dynamic>? food}) async {
+    final isEdit = food != null;
+    _nameController.text = food?['name'] ?? '';
+    _descController.text = food?['description'] ?? '';
+    _priceController.text = food?['price']?.toString() ?? '';
+    _pickedImage = null;
+    final result = await showDialog<bool>(
       context: context,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (context, setStateDialog) {
             return AlertDialog(
-              title: const Text('Add Food'),
+              title: Text(isEdit ? 'Edit Food' : 'Add Food'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -72,53 +112,116 @@ class _ManageScreenState extends State<_ManageScreen> {
                       keyboardType: TextInputType.numberWithOptions(decimal: true),
                     ),
                     const SizedBox(height: 12),
-                    _pickedImage == null
-                        ? TextButton.icon(
-                            onPressed: () async {
-                              await _pickImage();
-                              setState(() {});
-                            },
-                            icon: const Icon(Icons.image),
-                            label: const Text('Pick Image'),
-                          )
-                        : Column(
-                            children: [
-                              Image.file(
-                                File(_pickedImage!.path),
-                                height: 100,
-                                fit: BoxFit.cover,
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _pickedImage = null;
-                                  });
-                                },
-                                child: const Text('Remove Image'),
-                              ),
-                            ],
-                          ),
+                    GestureDetector(
+                      onTap: () async {
+                        final ImagePicker picker = ImagePicker();
+                        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                        if (image != null) {
+                          setStateDialog(() {
+                            _pickedImage = image;
+                          });
+                        }
+                      },
+                      child: _pickedImage != null
+                          ? Image.file(
+                              File(_pickedImage!.path),
+                              height: 100,
+                              width: 100,
+                              fit: BoxFit.cover,
+                            )
+                          : (food != null && food['image_url'] != null)
+                              ? Image.network(
+                                  food['image_url'],
+                                  height: 100,
+                                  width: 100,
+                                  fit: BoxFit.cover,
+                                )
+                              : Container(
+                                  height: 100,
+                                  width: 100,
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.image, size: 40),
+                                ),
+                    ),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
+                  onPressed: () => Navigator.pop(context),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: _isUploading ? null : () {
-                    // Upload logic will go here
-                  },
+                  onPressed: _isUploading
+                      ? null
+                      : () async {
+                          final name = _nameController.text.trim();
+                          final desc = _descController.text.trim();
+                          final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
+                          if (name.isEmpty || price <= 0) return;
+                          
+                          // Show confirmation dialog
+                          final confirmed = await _showConfirmationDialog(
+                            isEdit ? 'Update Food' : 'Add Food',
+                            isEdit 
+                              ? 'Are you sure you want to update "${food!['name']}"?'
+                              : 'Are you sure you want to add "${name}" to your menu?',
+                          );
+                          
+                          if (!confirmed) return;
+                          
+                          setState(() => _isUploading = true);
+                          String? imageUrl = food?['image_url'];
+                          if (_pickedImage != null) {
+                            imageUrl = await _uploadImage(_pickedImage!);
+                          }
+                          try {
+                            if (isEdit) {
+                              await Supabase.instance.client
+                                  .from('foods')
+                                  .update({
+                                    'name': name,
+                                    'description': desc,
+                                    'price': price,
+                                    'image_url': imageUrl,
+                                  })
+                                  .eq('id', food!['id']);
+                              setState(() => _isUploading = false);
+                              Navigator.pop(context, true);
+                              _fetchFoods();
+                            } else {
+                              await Supabase.instance.client
+                                  .from('foods')
+                                  .insert({
+                                    'name': name,
+                                    'description': desc,
+                                    'price': price,
+                                    'image_url': imageUrl,
+                                    'created_by': _userId,
+                                  });
+                              setState(() => _isUploading = false);
+                              Navigator.pop(context, true);
+                              _fetchFoods();
+                            }
+                          } catch (e) {
+                            setState(() => _isUploading = false);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error ${isEdit ? 'updating' : 'adding'} food: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
                   child: _isUploading
                       ? const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Add'),
+                      : Text(isEdit ? 'Save' : 'Add'),
                 ),
               ],
             );
@@ -126,25 +229,159 @@ class _ManageScreenState extends State<_ManageScreen> {
         );
       },
     );
+    return result;
+  }
+
+  Future<bool> _showConfirmationDialog(String title, String message) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: title.toLowerCase().contains('delete') ? Colors.red : null,
+            ),
+            child: Text(
+              title.toLowerCase().contains('delete') ? 'Delete' : 'Confirm',
+              style: TextStyle(
+                color: title.toLowerCase().contains('delete') ? Colors.white : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  Future<void> _deleteFood(String foodId) async {
+    // Find the food item to get its name for the confirmation message
+    final food = _foods.firstWhere((f) => f['id'] == foodId);
+    final foodName = food['name'] ?? 'this food item';
+    
+    // Show confirmation dialog
+    final confirmed = await _showConfirmationDialog(
+      'Delete Food',
+      'Are you sure you want to delete "$foodName"? This action cannot be undone.',
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      await Supabase.instance.client.from('foods').delete().eq('id', foodId);
+      _fetchFoods();
+      
+      // Show success message
+      if (mounted) {
+        _scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text('"$foodName" deleted successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        _scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text('Error deleting food: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    _priceController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Foods'),
-        backgroundColor: const Color(0xFF800000),
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: const Center(
-        child: Text('Manage Foods Placeholder'),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddFoodDialog,
-        backgroundColor: const Color(0xFF800000),
-        child: const Icon(Icons.add),
-        tooltip: 'Add Food',
+    // Wrap the Scaffold in a ScaffoldMessenger with the key
+    return ScaffoldMessenger(
+      key: _scaffoldMessengerKey,
+      child: Scaffold(
+        body: _isLoadingFoods
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh: () async => _fetchFoods(),
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        // Add Food button (top right)
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final result = await _showAddOrEditFoodDialog();
+                            if (result == true && mounted) {
+                              // Show SnackBar using the ScaffoldMessenger key
+                              _scaffoldMessengerKey.currentState?.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Food added successfully!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add Food'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ..._foods.map((food) => Card(
+                          child: ListTile(
+                            leading: food['image_url'] != null
+                                ? Image.network(food['image_url'], width: 50, height: 50, fit: BoxFit.cover)
+                                : const Icon(Icons.fastfood, size: 40),
+                            title: Text(food['name'] ?? ''),
+                            subtitle: Text('SAR ${food['price']?.toStringAsFixed(2) ?? ''}\n${food['description'] ?? ''}'),
+                            isThreeLine: true,
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.blue),
+                                  onPressed: () async {
+                                    final result = await _showAddOrEditFoodDialog(food: food);
+                                    if (result == true && mounted) {
+                                      _scaffoldMessengerKey.currentState?.showSnackBar(
+                                        SnackBar(
+                                          content: Text('"${food['name']}" updated successfully!'),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => _deleteFood(food['id']),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )),
+                    if (_foods.isEmpty)
+                      const Center(child: Text('No foods found. Add your first food!')),
+                  ],
+                ),
+              ),
       ),
     );
   }

@@ -7,6 +7,8 @@ class MerchantProductsScreen extends StatefulWidget {
   final List<Map<String, dynamic>> items;
   final List<Map<String, dynamic>> cartItems;
   final Function(Map<String, dynamic>, List<Map<String, dynamic>>) onAddToCart;
+  final void Function(Map<String, dynamic> food)? onToggleFavorite;
+  final bool Function(Map<String, dynamic> food)? isFavorite;
 
   const MerchantProductsScreen({
     super.key,
@@ -14,6 +16,8 @@ class MerchantProductsScreen extends StatefulWidget {
     required this.items,
     required this.cartItems,
     required this.onAddToCart,
+    this.onToggleFavorite,
+    this.isFavorite,
   });
 
   @override
@@ -67,18 +71,31 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.zero,
-                      child: Image.asset(
-                        foodItem['image'],
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[200],
-                          width: double.infinity,
-                          height: double.infinity,
-                          child: const Center(child: Icon(Icons.broken_image)),
-                        ),
-                      ),
+                      child: foodItem['image_url'] != null && foodItem['image_url'].toString().isNotEmpty
+                          ? Image.network(
+                              foodItem['image_url'],
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey[200],
+                                width: double.infinity,
+                                height: double.infinity,
+                                child: const Center(child: Icon(Icons.broken_image)),
+                              ),
+                            )
+                          : Image.asset(
+                              foodItem['image'] ?? 'assets/images/food_image_1.jpg',
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey[200],
+                                width: double.infinity,
+                                height: double.infinity,
+                                child: const Center(child: Icon(Icons.broken_image)),
+                              ),
+                            ),
                     ),
                     // Close button
                     Positioned(
@@ -114,7 +131,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                 ),
               ),
               Expanded(
-                child: Padding(
+                child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,7 +142,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              foodItem['name'],
+                              foodItem['name'] ?? 'Food Item',
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -150,7 +167,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        foodItem['description'],
+                        foodItem['description'] ?? 'No description available',
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.black54,
@@ -244,7 +261,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                               widget.onAddToCart(foodItem, selectedAddOns);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Added ${foodItem['name']} to cart!'),
+                                  content: Text('Added ${foodItem['name'] ?? 'Food Item'} to cart!'),
                                   backgroundColor: AppConstants.primaryColor,
                                 ),
                               );
@@ -273,6 +290,7 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
+                      const SizedBox(height: 20), // Extra bottom padding
                     ],
                   ),
                 ),
@@ -438,134 +456,174 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.85,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-        ),
-        itemCount: widget.items.length,
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () => _showFoodDetailsModal(widget.items[index]),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha((255 * 0.1).round()),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+      body: Column(
+        children: [
+          // You can add a header or spacing here if needed
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.75,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Food image
-                  Container(
-                    height: 120,
+              itemCount: widget.items.length,
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () => _showFoodDetailsModal(widget.items[index]),
+                  child: Container(
                     decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        topRight: Radius.circular(12),
-                      ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        topRight: Radius.circular(12),
-                      ),
-                      child: Image.asset(
-                        widget.items[index]['image'],
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[200],
-                          child: const Center(child: Icon(Icons.broken_image)),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha((255 * 0.1).round()),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
+                      ],
                     ),
-                  ),
-                  // Food details
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.items[index]['name'],
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Expanded(
-                            child: Text(
-                              widget.items[index]['description'],
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black54,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'SAR ${widget.items[index]['price'].toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppConstants.primaryColor,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Food image
+                        Stack(
+                          children: [
+                            Container(
+                              height: 120,
+                              decoration: BoxDecoration(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(12),
+                                  topRight: Radius.circular(12),
                                 ),
                               ),
-                              GestureDetector(
-                                onTap: () {
-                                  widget.onAddToCart(widget.items[index], []);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('${widget.items[index]['name']} added to cart!'),
-                                      backgroundColor: AppConstants.primaryColor,
+                              child: ClipRRect(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(12),
+                                  topRight: Radius.circular(12),
+                                ),
+                                child: Image(
+                                  image: widget.items[index]['image_url'] != null && widget.items[index]['image_url'].toString().isNotEmpty
+                                      ? NetworkImage(widget.items[index]['image_url'])
+                                      : AssetImage(widget.items[index]['image'] ?? '') as ImageProvider,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    color: Colors.grey[200],
+                                    child: const Center(child: Icon(Icons.broken_image)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Heart icon overlay
+                            if (widget.onToggleFavorite != null && widget.isFavorite != null)
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    widget.onToggleFavorite!(widget.items[index]);
+                                    setState(() {}); // Force rebuild to update heart icon
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withAlpha((255 * 0.9).round()),
+                                      shape: BoxShape.circle,
                                     ),
-                                  );
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: AppConstants.primaryColor,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.add,
-                                    color: Colors.white,
-                                    size: 16,
+                                    child: Icon(
+                                      widget.isFavorite!(widget.items[index]) ? Icons.favorite : Icons.favorite_border,
+                                      size: 16,
+                                      color: AppConstants.primaryColor,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ],
+                          ],
+                        ),
+                        // Food details - Made flexible to prevent overflow
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.items[index]['name'] ?? 'Food Item',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black87,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Expanded(
+                                  child: Text(
+                                    widget.items[index]['description'] ?? 'No description available',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.black54,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'SAR ${(widget.items[index]['price'] ?? 0.0).toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppConstants.primaryColor,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {
+                                        widget.onAddToCart(widget.items[index], []);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('${widget.items[index]['name'] ?? 'Food Item'} added to cart!'),
+                                            backgroundColor: AppConstants.primaryColor,
+                                          ),
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: AppConstants.primaryColor,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.add,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }

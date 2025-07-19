@@ -23,345 +23,12 @@ class _MenuScreenState extends State<MenuScreen> {
     'assets/images/Burger.jpg',
   ];
 
-  final List<Map<String, String>> _foodItems = [
-    {'name': 'Beef Bulalo', 'image': 'assets/images/beef_bulalo.jpg'},
-    {'name': 'Chicken Inasal', 'image': 'assets/images/chicken_inasal.jpg'},
-    {'name': 'Lumpia', 'image': 'assets/images/Lumpia.jpg'},
-    {'name': 'Beef Sisig', 'image': 'assets/images/beef_sisig.jpg'},
-    {'name': 'Buttered Chicken', 'image': 'assets/images/buttered_chicken.jpg'},
-    {'name' : 'Bangsilog', 'image': 'assets/images/bangsilog.jpg'},
-    {'name' : 'Beef Broccoli', 'image': 'assets/images/beef_broccoli.jpg'},
-    {'name' : 'Halo-halo', 'image': 'assets/images/halo-halo.jpg'},
-  ];
+  // Add state for dynamic favorites if needed
+  List<Map<String, dynamic>> _favoriteFoods = [];
 
-  final List<Map<String, dynamic>> _recommendedItems = [
-    {
-      'name': 'Beef Bulalo',
-      'image': 'assets/images/beef_bulalo.jpg',
-      'description': 'Classic Filipino beef soup with bone marrow',
-      'price': 55.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Buttered Chicken',
-      'image': 'assets/images/buttered_chicken.jpg',
-      'description': 'Crispy fried chicken tossed in butter sauce',
-      'price': 38.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Lumpia',
-      'image': 'assets/images/Lumpia.jpg',
-      'description': 'Crispy spring rolls filled with fresh vegetables and meat',
-      'price': 15.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Beef Sisig',
-      'image': 'assets/images/beef_sisig.jpg',
-      'description': 'Sizzling chopped beef with onions and chili',
-      'price': 45.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Chicken Inasal',
-      'image': 'assets/images/chicken_inasal.jpg',
-      'description': 'Juicy grilled chicken marinated in calamansi and annatto oil',
-      'price': 25.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Bangsilog',
-      'image': 'assets/images/bangsilog.jpg',
-      'description': 'Crispy fried bangus with garlic rice and sunny-side egg',
-      'price': 25.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Beef Broccoli',
-      'image': 'assets/images/beef_broccoli.jpg',
-      'description': 'Tender beef wok-tossed with crisp broccoli florets',
-      'price': 30.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Halo-halo',
-      'image': 'assets/images/halo-halo.jpg',
-      'description': 'Colorful Filipino dessert with crushed ice and sweet toppings',
-      'price': 15.00,
-      'isFavorite': false,
-    },
-  ];
-
-  final List<Map<String, dynamic>> _blackPinoyItems = [
-    {
-      'name': 'Beef Bulalo',
-      'image': 'assets/images/beef_bulalo.jpg',
-      'description': 'Classic Filipino beef soup with bone marrow.',
-      'price': 55.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Beef Kare-Kare',
-      'image': 'assets/images/beef_kare-kare.jpg',
-      'description': 'Rich peanut stew with tender beef and vegetables.',
-      'price': 50.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Beef Sisig',
-      'image': 'assets/images/beef_sisig.jpg',
-      'description': 'Sizzling chopped beef with onions and chili.',
-      'price': 45.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Buttered Chicken',
-      'image': 'assets/images/buttered_chicken.jpg',
-      'description': 'Crispy fried chicken tossed in butter sauce.',
-      'price': 38.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Bangsilog',
-      'image': 'assets/images/bangsilog.jpg',
-      'description': 'Crispy fried bangus, garlic rice, and a sunny-side egg — a classic Filipino breakfast that hits the spot any time of day!',
-      'price': 25.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Beef Broccoli',
-      'image': 'assets/images/beef_broccoli.jpg',
-      'description': 'Tender slices of beef wok‑tossed with crisp broccoli florets in a savory garlic‑soy sauce.',
-      'price': 30.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Chicken Inasal',
-      'image': 'assets/images/chicken_inasal.jpg',
-      'description': 'Juicy, grilled chicken marinated in calamansi, garlic, and annatto oil — flame-grilled to smoky perfection.',
-      'price': 25.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Halo-halo',
-      'image': 'assets/images/halo-halo.jpg',
-      'description': 'A colorful Filipino dessert with crushed ice, creamy leche flan, sweet beans, ube, and gulaman — all mixed for the ultimate icy treat!',
-      'price': 15.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Fried Chicken',
-      'image': 'assets/images/fried_chicken_blackpinoy.jpg',
-      'description': 'Crispy on the outside, tender and juicy on the inside — our classic fried chicken is seasoned to perfection and fried golden brown.',
-      'price': 20.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Garlic Fried Rice',
-      'image': 'assets/images/garlic_friedrice.jpg',
-      'description': 'Aromatic rice stir-fried with golden garlic bits — simple, savory, and the perfect pairing for any meal!',
-      'price': 10.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Laing',
-      'image': 'assets/images/Laing.jpg',
-      'description': 'A rich, creamy Bicolano dish made with dried taro leaves simmered in coconut milk, chilies, and spices — earthy, spicy, and unforgettable.',
-      'price': 20.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Leche Flan',
-      'image': 'assets/images/leche_flan.jpg',
-      'description': 'A silky smooth caramel custard made with eggs, milk, and sugar — the perfect sweet ending to any Filipino meal.',
-      'price': 20.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Lomi',
-      'image': 'assets/images/Lomi.jpg',
-      'description': 'Thick egg noodles in a savory, hearty broth loaded with pork, vegetables, and egg — a warm, comforting Filipino favorite best enjoyed hot!',
-      'price': 25.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Pancit Canton',
-      'image': 'assets/images/pancit_canton.jpg',
-      'description': 'Stir-fried egg noodles tossed with vegetables, meat, and a flavorful soy-garlic sauce — a delicious Filipino staple perfect for any celebration!',
-      'price': 20.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Samalamig',
-      'image': 'assets/images/samalamig.jpg',
-      'description': 'A sweet, refreshing Filipino drink made with gulaman, sago, and flavored syrup — perfect to cool you down any time of the day!',
-      'price': 10.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Steamed Siomai',
-      'image': 'assets/images/steamed_siomai.jpg',
-      'description': 'Tender dumplings filled with seasoned meat and vegetables, steamed to juicy perfection — served with soy sauce, calamansi, and chili garlic oil.',
-      'price': 12.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Sweet and Sour Tilapia',
-      'image': 'assets/images/sweet_sour_tilapia.jpg',
-      'description': 'Crispy-fried tilapia topped with a vibrant sweet and sour sauce made with bell peppers, onions, and pineapples — a tangy twist you\'ll crave again and again!',
-      'price': 30.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Tofu Sisig',
-      'image': 'assets/images/tofu_sisig.jpg',
-      'description': 'Sizzling tofu cubes tossed in a creamy, spicy sisig sauce with onions and chili — a guilt-free, flavorful plant-based take on a Filipino favorite.',
-      'price': 18.00,
-      'isFavorite': false,
-    },
-  ];
-
-  final List<Map<String, dynamic>> _sarapInasalItems = [
-    {
-      'name': 'Fried Rice',
-      'image': 'assets/images/fried_rice.jpg',
-      'description': 'Delicious fried rice with vegetables, eggs, and special seasonings.',
-      'price': 18.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Sinigang na Salmon',
-      'image': 'assets/images/sinigang_salmon.jpg',
-      'description': 'Sour tamarind soup with fresh salmon and vegetables.',
-      'price': 45.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Chicharon Bulaklak',
-      'image': 'assets/images/chicharon_bulaklak.jpg',
-      'description': 'Crispy pork rinds made from pork intestines, perfect appetizer.',
-      'price': 25.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Mixed Seafoods',
-      'image': 'assets/images/mixed_seafoods.jpg',
-      'description': 'Fresh seafood medley with shrimp, fish, and calamari.',
-      'price': 55.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Tapsilog',
-      'image': 'assets/images/Tapsilog.jpg',
-      'description': 'Tender beef tapa marinated in sweet and savory spices, served with garlic fried rice and a perfectly cooked sunny-side egg — a classic Filipino all-day breakfast!',
-      'price': 20.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Sinigang Spare Ribs',
-      'image': 'assets/images/sinigang_spare-ribs.jpg',
-      'description': 'A comforting bowl of sour tamarind broth loaded with fall-off-the-bone beef spare ribs, fresh vegetables, and just the right level of tang — the ultimate Filipino comfort food.',
-      'price': 35.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Beef Bulalo',
-      'image': 'assets/images/bulalo_sarap-inasal.jpg',
-      'description': 'A rich, slow-cooked beef shank soup with bone marrow, corn, cabbage, and vegetables — warm, hearty, and perfect for sharing!',
-      'price': 35.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Beef Sisig',
-      'image': 'assets/images/sisig-sarap-inasal.jpg',
-      'description': 'Sizzling chopped beef seasoned with onions, chili, and calamansi — served on a hot plate for that irresistible smoky flavor and crunch!',
-      'price': 30.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Halo-Halo',
-      'image': 'assets/images/Halo-Halo_sarapinasal.jpg',
-      'description': 'A colorful Filipino dessert layered with crushed ice, sweetened fruits, gulaman, leche flan, and ube — topped with evaporated milk for a truly refreshing treat!',
-      'price': 18.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Buttered Chicken',
-      'image': 'assets/images/buttered_chicken-sarapinasal.png',
-      'description': 'Crispy fried chicken glazed in a rich, buttery garlic sauce — savory, sweet, and addictively good with every bite!',
-      'price': 28.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Fried Boneless Bangus',
-      'image': 'assets/images/boneless-bangus.jpg',
-      'description': 'Crispy, golden-fried boneless milkfish seasoned to perfection — flaky, flavorful, and mess-free for an easy, delicious meal.',
-      'price': 25.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Grilled T-bone Steak',
-      'image': 'assets/images/t-bone-steak.jpg',
-      'description': 'Juicy, tender T-bone steak grilled just right, seasoned with herbs and served with your choice of sides — a hearty feast for steak lovers.',
-      'price': 90.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Lomi',
-      'image': 'assets/images/Lomi-sarapinasal.jpg',
-      'description': 'Thick, hearty egg noodles swimming in a rich, savory broth loaded with tender meat, veggies, and egg — the ultimate Filipino comfort soup.',
-      'price': 25.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Milktea',
-      'image': 'assets/images/milktea.jpg',
-      'description': 'Creamy, refreshing milk tea with chewy tapioca pearls — a perfect sweet treat to sip anytime, anywhere.',
-      'price': 15.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Pancit Batil Patung',
-      'image': 'assets/images/pancit_batil_patung.jpg',
-      'description': 'A traditional Filipino noodle dish featuring sautéed vegetables, savory meat strips, and a flavorful sauce — a wholesome, satisfying meal full of local flavors.',
-      'price': 20.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Pancit Palabok',
-      'image': 'assets/images/palabok.jpg',
-      'description': 'Rice noodles topped with a rich, garlicky shrimp sauce, crunchy chicharrón, boiled eggs, and fresh green onions — a classic crowd-pleaser bursting with flavor!',
-      'price': 25.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Filipino Spaghetti',
-      'image': 'assets/images/pinoy_spaghetti.jpg',
-      'description': 'Sweet-style spaghetti loaded with savory ground meat, sliced hotdogs, and a rich, tangy tomato sauce — a Filipino party favorite loved by kids and adults alike.',
-      'price': 20.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Balbacua',
-      'image': 'assets/images/balbacua.jpg',
-      'description': 'Slow-cooked beef stew simmered until tender with rich spices and collagen-rich tendons — a hearty, flavorful dish perfect for meat lovers craving deep Filipino flavors.',
-      'price': 40.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Sinigang na Hipon',
-      'image': 'assets/images/sinigang-hipon.jpg',
-      'description': 'A tangy tamarind-based soup loaded with fresh, juicy shrimp and crisp vegetables — a comforting Filipino classic that\'s both flavorful and refreshing.',
-      'price': 28.00,
-      'isFavorite': false,
-    },
-  ];
-
-  final List<Map<String, String>> _merchants = [
-    {'name': 'Black Pinoy', 'image': 'assets/images/blackPinoy_logo.jpg'},
-    {'name': 'Sarap Inasal', 'image': 'assets/images/sarapInasal_logo.jpg'},
-  ];
+  // Add state for dynamic merchants
+  List<Map<String, dynamic>> _dynamicMerchants = [];
+  bool _isLoadingDynamicMerchants = true;
 
   late final PageController _pageController;
   int _currentPage = 0;
@@ -382,6 +49,42 @@ class _MenuScreenState extends State<MenuScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Welcome, ${widget.userName}!')),
       );
+    });
+    _fetchDynamicMerchants();
+    _fetchFavoriteFoods();
+  }
+
+  Future<void> _fetchFavoriteFoods() async {
+    // Fetch favorite foods from Supabase if you have a favorites table or logic
+    // For now, leave as empty or implement as needed
+    setState(() {
+      _favoriteFoods = [];
+    });
+  }
+
+  Future<void> _fetchDynamicMerchants() async {
+    // Fetch all admins from Supabase
+    final response = await Supabase.instance.client
+        .from('users')
+        .select()
+        .eq('role', 'admin');
+    final allAdmins = List<Map<String, dynamic>>.from(response as List);
+
+    // Only include admins who have at least one food
+    List<Map<String, dynamic>> dynamicMerchants = [];
+    for (final admin in allAdmins) {
+      final foods = await Supabase.instance.client
+          .from('foods')
+          .select('id')
+          .eq('created_by', admin['id']);
+      if (foods.isNotEmpty) {
+        dynamicMerchants.add(admin);
+      }
+    }
+
+    setState(() {
+      _dynamicMerchants = dynamicMerchants;
+      _isLoadingDynamicMerchants = false;
     });
   }
 
@@ -439,6 +142,7 @@ class _MenuScreenState extends State<MenuScreen> {
       setState(() {
         _cartItems.add({
           'name': item['name'],
+          'image_url': item['image_url'],
           'image': item['image'],
           'price': item['price'],
           'addOns': List<Map<String, dynamic>>.from(addOns),
@@ -451,7 +155,10 @@ class _MenuScreenState extends State<MenuScreen> {
 
   double _getTotalPrice() {
     return _cartItems.fold(0.0, (total, item) {
-      return total + (item['price'] * (item['quantity'] ?? 1));
+      double itemTotal = item['price'] * (item['quantity'] ?? 1);
+      final addOns = item['addOns'] as List<Map<String, dynamic>>? ?? [];
+      double addOnsTotal = addOns.fold(0.0, (addOnTotal, addOn) => addOnTotal + addOn['price']) * (item['quantity'] ?? 1);
+      return total + itemTotal + addOnsTotal;
     });
   }
 
@@ -461,22 +168,34 @@ class _MenuScreenState extends State<MenuScreen> {
     ).showSnackBar(const SnackBar(content: Text('Profile pressed!')));
   }
 
-  void _toggleFavorite(int index) {
+  // Toggle favorite functionality
+  void _toggleFavorite(Map<String, dynamic> food) {
     setState(() {
-      _recommendedItems[index]['isFavorite'] = !_recommendedItems[index]['isFavorite'];
+      final existingIndex = _favoriteFoods.indexWhere((fav) => fav['id'] == food['id']);
+      if (existingIndex != -1) {
+        // Remove from favorites
+        _favoriteFoods.removeAt(existingIndex);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${food['name'] ?? 'Food Item'} removed from favorites'),
+            backgroundColor: Colors.grey[600],
+          ),
+        );
+      } else {
+        // Add to favorites
+        _favoriteFoods.add(food);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${food['name'] ?? 'Food Item'} added to favorites'),
+            backgroundColor: AppConstants.primaryColor,
+          ),
+        );
+      }
     });
   }
 
-  void _toggleBlackPinoyFavorite(int index) {
-    setState(() {
-      _blackPinoyItems[index]['isFavorite'] = !_blackPinoyItems[index]['isFavorite'];
-    });
-  }
-
-  void _toggleSarapInasalFavorite(int index) {
-    setState(() {
-      _sarapInasalItems[index]['isFavorite'] = !_sarapInasalItems[index]['isFavorite'];
-    });
+  bool _isFavorite(Map<String, dynamic> food) {
+    return _favoriteFoods.any((fav) => fav['id'] == food['id']);
   }
 
   void _onNavigationTapped(int index) {
@@ -494,96 +213,105 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   void _showFavoritesPage() {
-    final allItems = [..._recommendedItems, ..._blackPinoyItems, ..._sarapInasalItems];
-    final favorites = allItems.where((item) => item['isFavorite'] == true).toList();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.7,
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'My Favorites',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            if (favorites.isEmpty)
-              const Expanded(
-                child: Center(
-                  child: Text(
-                    'No favorites yet!\nTap the heart icon to add items to your favorites.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'My Favorites',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
                 ),
-              )
-            else
-              Expanded(
-                child: ListView.builder(
-                  itemCount: favorites.length,
-                  itemBuilder: (context, index) {
-                    final item = favorites[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.asset(
-                            item['image'],
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        title: Text(
-                          item['name'],
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text('SAR ${item['price'].toStringAsFixed(2)}'),
-                        trailing: IconButton(
-                          onPressed: () {
-                            // Find which list the item belongs to and toggle accordingly
-                            if (_recommendedItems.contains(item)) {
-                              _toggleFavorite(_recommendedItems.indexOf(item));
-                            } else if (_blackPinoyItems.contains(item)) {
-                              _toggleBlackPinoyFavorite(_blackPinoyItems.indexOf(item));
-                            } else if (_sarapInasalItems.contains(item)) {
-                              _toggleSarapInasalFavorite(_sarapInasalItems.indexOf(item));
-                            }
-                          },
-                          icon: Icon(
-                            Icons.favorite,
-                            color: Colors.red,
-                          ),
+                const SizedBox(height: 20),
+                if (_favoriteFoods.isEmpty)
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                        'No favorites yet!\nTap the heart icon to add items to your favorites.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
                         ),
                       ),
-                    );
-                  },
-                ),
-              ),
-          ],
-        ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _favoriteFoods.length,
+                      itemBuilder: (context, index) {
+                        final item = _favoriteFoods[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: ListTile(
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
+                                  ? Image.network(
+                                      item['image_url'],
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => Container(
+                                        width: 60,
+                                        height: 60,
+                                        color: Colors.grey[200],
+                                        child: const Icon(Icons.broken_image),
+                                      ),
+                                    )
+                                  : Container(
+                                      width: 60,
+                                      height: 60,
+                                      color: Colors.grey[200],
+                                      child: const Icon(Icons.fastfood, size: 40),
+                                    ),
+                            ),
+                            title: Text(
+                              item['name'] ?? 'Food Item',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text('SAR ${item['price']?.toStringAsFixed(2) ?? ''}'),
+                            trailing: IconButton(
+                              onPressed: () {
+                                _toggleFavorite(item);
+                                setModalState(() {}); // Refresh the modal
+                              },
+                              icon: const Icon(
+                                Icons.favorite,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -815,12 +543,31 @@ class _MenuScreenState extends State<MenuScreen> {
                                     children: [
                                       ClipRRect(
                                         borderRadius: BorderRadius.circular(8),
-                                        child: Image.asset(
-                                          item['image'],
-                                          width: 60,
-                                          height: 60,
-                                          fit: BoxFit.cover,
-                                        ),
+                                        child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
+                                            ? Image.network(
+                                                item['image_url'],
+                                                width: 60,
+                                                height: 60,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) => Container(
+                                                  width: 60,
+                                                  height: 60,
+                                                  color: Colors.grey[200],
+                                                  child: const Icon(Icons.broken_image),
+                                                ),
+                                              )
+                                            : Image.asset(
+                                                item['image'] ?? 'assets/images/food_image_1.jpg',
+                                                width: 60,
+                                                height: 60,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) => Container(
+                                                  width: 60,
+                                                  height: 60,
+                                                  color: Colors.grey[200],
+                                                  child: const Icon(Icons.broken_image),
+                                                ),
+                                              ),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
@@ -839,24 +586,30 @@ class _MenuScreenState extends State<MenuScreen> {
                                                 padding: const EdgeInsets.only(top: 4),
                                                 child: Column(
                                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: addOns.map((addOn) => Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                    children: [
-                                                      Text(
-                                                        '+ ${addOn['name']}',
-                                                        style: const TextStyle(fontSize: 13, color: Colors.grey),
-                                                      ),
-                                                      Text(
-                                                        'SAR ${addOn['price'].toStringAsFixed(2)}',
-                                                        style: TextStyle(fontSize: 13, color: AppConstants.primaryColor),
-                                                      ),
-                                                    ],
+                                                  children: addOns.map((addOn) => Padding(
+                                                    padding: const EdgeInsets.only(bottom: 2),
+                                                    child: Row(
+                                                      children: [
+                                                        Expanded(
+                                                          child: Text(
+                                                            '+ ${addOn['name']}',
+                                                            style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 8),
+                                                        Text(
+                                                          'SAR ${addOn['price'].toStringAsFixed(2)}',
+                                                          style: TextStyle(fontSize: 13, color: AppConstants.primaryColor),
+                                                        ),
+                                                      ],
+                                                    ),
                                                   )).toList(),
                                                 ),
                                               ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              'SAR ${item['price'].toStringAsFixed(2)}',
+                                              'SAR ${(item['price'] + addOns.fold(0.0, (total, addOn) => total + addOn['price'])).toStringAsFixed(2)}',
                                               style: TextStyle(
                                                 color: AppConstants.primaryColor,
                                                 fontWeight: FontWeight.w600,
@@ -1027,18 +780,31 @@ class _MenuScreenState extends State<MenuScreen> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.zero,
-                      child: Image.asset(
-                        foodItem['image'],
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[200],
-                          width: double.infinity,
-                          height: double.infinity,
-                          child: const Center(child: Icon(Icons.broken_image)),
-                        ),
-                      ),
+                      child: foodItem['image_url'] != null && foodItem['image_url'].toString().isNotEmpty
+                          ? Image.network(
+                              foodItem['image_url'],
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey[200],
+                                width: double.infinity,
+                                height: double.infinity,
+                                child: const Center(child: Icon(Icons.broken_image)),
+                              ),
+                            )
+                          : Image.asset(
+                              foodItem['image'] ?? 'assets/images/food_image_1.jpg',
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey[200],
+                                width: double.infinity,
+                                height: double.infinity,
+                                child: const Center(child: Icon(Icons.broken_image)),
+                              ),
+                            ),
                     ),
                     // Overlay Row with only the close button on the right
                     Positioned(
@@ -1074,7 +840,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 ),
               ),
               Expanded(
-                child: Padding(
+                child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1085,7 +851,7 @@ class _MenuScreenState extends State<MenuScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              foodItem['name'],
+                              foodItem['name'] ?? 'Food Item',
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -1110,7 +876,7 @@ class _MenuScreenState extends State<MenuScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        foodItem['description'],
+                        foodItem['description'] ?? 'No description available',
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.black54,
@@ -1204,7 +970,7 @@ class _MenuScreenState extends State<MenuScreen> {
                               _addToCart(foodItem, selectedAddOns);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Added ${foodItem['name']} to cart!'),
+                                  content: Text('Added ${foodItem['name'] ?? 'Food Item'} to cart!'),
                                   backgroundColor: AppConstants.primaryColor,
                                 ),
                               );
@@ -1233,6 +999,7 @@ class _MenuScreenState extends State<MenuScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
+                      const SizedBox(height: 20), // Extra bottom padding
                     ],
                   ),
                 ),
@@ -1390,7 +1157,6 @@ class _MenuScreenState extends State<MenuScreen> {
 
   // Add the new method to show the checkout details modal
   void _showCheckoutDetailsModal() {
-    String address = '';
     String paymentMethod = '';
     String onlinePaymentType = '';
     final addressController = TextEditingController();
@@ -1445,11 +1211,6 @@ class _MenuScreenState extends State<MenuScreen> {
                             hintText: 'Enter your delivery address',
                             border: OutlineInputBorder(),
                           ),
-                          onChanged: (val) {
-                            setModalState(() {
-                              address = val;
-                            });
-                          },
                         ),
                         const SizedBox(height: 20),
                         const Text(
@@ -1547,14 +1308,33 @@ class _MenuScreenState extends State<MenuScreen> {
                                 child: ListTile(
                                   leading: ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
-                                    child: Image.asset(
-                                      item['image'],
-                                      width: 48,
-                                      height: 48,
-                                      fit: BoxFit.cover,
-                                    ),
+                                    child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
+                                        ? Image.network(
+                                            item['image_url'],
+                                            width: 48,
+                                            height: 48,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) => Container(
+                                              width: 48,
+                                              height: 48,
+                                              color: Colors.grey[200],
+                                              child: const Icon(Icons.broken_image, size: 24),
+                                            ),
+                                          )
+                                        : Image.asset(
+                                            item['image'] ?? 'assets/images/food_image_1.jpg',
+                                            width: 48,
+                                            height: 48,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) => Container(
+                                              width: 48,
+                                              height: 48,
+                                              color: Colors.grey[200],
+                                              child: const Icon(Icons.broken_image, size: 24),
+                                            ),
+                                          ),
                                   ),
-                                  title: Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  title: Text(item['name'] ?? 'Food Item', style: const TextStyle(fontWeight: FontWeight.bold)),
                                   subtitle: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -1567,7 +1347,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                     ],
                                   ),
                                   trailing: Text(
-                                    'SAR ${(item['price'] * quantity).toStringAsFixed(2)}',
+                                    'SAR ${((item['price'] + addOns.fold(0.0, (total, addOn) => total + addOn['price'])) * quantity).toStringAsFixed(2)}',
                                     style: TextStyle(fontWeight: FontWeight.bold, color: AppConstants.primaryColor),
                                   ),
                                 ),
@@ -1652,7 +1432,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   if (error.isNotEmpty)
                     Positioned.fill(
                       child: Container(
-                        color: Colors.black.withOpacity(0.25), // Dim background
+                        color: Colors.black.withValues(alpha: 0.25), // Dim background
                         child: Center(
                           child: Container(
                             width: 220,
@@ -1875,17 +1655,19 @@ class _MenuScreenState extends State<MenuScreen> {
                                   return;
                                 }
                                 // Success
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Payment successful! Your order has been placed.'),
-                                    backgroundColor: AppConstants.primaryColor,
-                                  ),
-                                );
-                                setState(() {
-                                  _cartItems.clear();
-                                  _cartCount = 0;
-                                });
-                                Navigator.of(context).popUntil((route) => route.isFirst);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Payment successful! Your order has been placed.'),
+                                      backgroundColor: AppConstants.primaryColor,
+                                    ),
+                                  );
+                                  setState(() {
+                                    _cartItems.clear();
+                                    _cartCount = 0;
+                                  });
+                                  Navigator.of(context).popUntil((route) => route.isFirst);
+                                }
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFd00000),
@@ -1922,6 +1704,338 @@ class _MenuScreenState extends State<MenuScreen> {
         );
       },
     );
+  }
+
+  // Helper function to fetch up to 4 foods for a merchant
+  Future<List<Map<String, dynamic>>> fetchPreviewFoods(String merchantId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('foods')
+          .select()
+          .eq('created_by', merchantId)
+          .order('created_at', ascending: false)
+          .limit(4);
+      
+      final foods = List<Map<String, dynamic>>.from(response as List);
+      return foods;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Updated food preview card for merchant preview grid - matching View All layout
+  Widget buildFoodPreviewCard(Map<String, dynamic> food, int index, {VoidCallback? onAddToCart, VoidCallback? onToggleFavorite, bool isFavorite = false}) {
+    return GestureDetector(
+      onTap: () => _showFoodDetailsModal(food),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha((255 * 0.1).round()),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                Container(
+                  height: 120, // Match the Admin Products layout
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                    child: food['image_url'] != null && food['image_url'].toString().isNotEmpty
+                        ? Image.network(
+                            food['image_url'],
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: Colors.grey[200],
+                              child: const Center(child: Icon(Icons.broken_image)),
+                            ),
+                          )
+                        : Container(
+                            color: Colors.grey[200],
+                            child: const Center(child: Icon(Icons.fastfood)),
+                          ),
+                  ),
+                ),
+                // Heart icon overlay
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: onToggleFavorite,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha((255 * 0.9).round()),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        size: 16,
+                        color: AppConstants.primaryColor,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      food['name'] ?? 'Food Item',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      food['description'] ?? 'No description available',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.black54,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'SAR ${(food['price'] ?? 0.0).toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppConstants.primaryColor,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: onAddToCart,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppConstants.primaryColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Widget to display merchant preview with 2x2 grid of food images
+  Widget buildMerchantPreview(Map<String, dynamic> merchant) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Merchant name
+          Text(
+            merchant['name'] ?? merchant['email'] ?? 'Merchant',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black87),
+          ),
+          const SizedBox(height: 16),
+          // Food preview grid (2x2)
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: fetchPreviewFoods(merchant['id']),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const SizedBox(
+                  height: 180,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.fastfood, size: 48, color: Colors.grey),
+                        SizedBox(height: 8),
+                        Text(
+                          'No products available',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              
+              final foods = snapshot.data!;
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.62,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                ),
+                itemCount: foods.length > 4 ? 4 : foods.length,
+                itemBuilder: (context, index) {
+                  return buildFoodPreviewCard(
+                    foods[index],
+                    index,
+                    onAddToCart: () => _addToCart(foods[index], []),
+                    onToggleFavorite: () => _toggleFavorite(foods[index]),
+                    isFavorite: _isFavorite(foods[index]),
+                  );
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          // Show more products button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () async {
+                if (!mounted) return;
+                final merchantId = merchant['id']!;
+                final merchantName = merchant['name'] ?? merchant['email'] ?? 'Merchant';
+                final response = await Supabase.instance.client
+                    .from('foods')
+                    .select()
+                    .eq('created_by', merchantId)
+                    .order('created_at', ascending: false);
+                if (!mounted) return;
+                final merchantFoods = List<Map<String, dynamic>>.from(response as List);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MerchantProductsScreen(
+                      merchantName: merchantName,
+                      items: merchantFoods,
+                      cartItems: _cartItems,
+                      onAddToCart: _addToCart,
+                      onToggleFavorite: _toggleFavorite,
+                      isFavorite: _isFavorite,
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppConstants.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                elevation: 2,
+              ),
+              child: const Text(
+                'View Products',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Fetch all admins/merchants from Supabase who have foods
+  Future<List<Map<String, dynamic>>> fetchMerchants() async {
+    try {
+      // Get all admin users
+      final usersResponse = await Supabase.instance.client
+          .from('users')
+          .select()
+          .eq('role', 'admin');
+      final allAdmins = List<Map<String, dynamic>>.from(usersResponse as List);
+
+      if (allAdmins.isEmpty) {
+        return [];
+      }
+
+      // Get all foods with their created_by IDs
+      final foodsResponse = await Supabase.instance.client
+          .from('foods')
+          .select('created_by')
+          .not('created_by', 'is', null);
+      final allFoods = List<Map<String, dynamic>>.from(foodsResponse as List);
+
+      // Create a set of user IDs who have foods
+      final usersWithFoods = allFoods
+          .map((food) => food['created_by']?.toString())
+          .where((id) => id != null)
+          .toSet();
+
+      // Filter admins who have foods
+      final merchantsWithFoods = allAdmins
+          .where((admin) => usersWithFoods.contains(admin['id']?.toString()))
+          .toList();
+
+      return merchantsWithFoods;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Add fetch functions for dynamic data from Supabase
+  Future<List<Map<String, dynamic>>> fetchFoodsPreview() async {
+    final response = await Supabase.instance.client
+        .from('foods')
+        .select()
+        .order('created_at', ascending: false)
+        .limit(8);
+    return List<Map<String, dynamic>>.from(response as List);
+  }
+
+  // Update fetchRecommendedFoods to fetch the 6 most recent foods
+  Future<List<Map<String, dynamic>>> fetchRecommendedFoods() async {
+    final response = await Supabase.instance.client
+        .from('foods')
+        .select()
+        .order('created_at', ascending: false)
+        .limit(6);
+    return List<Map<String, dynamic>>.from(response as List);
   }
 
   @override
@@ -2123,20 +2237,22 @@ class _MenuScreenState extends State<MenuScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            "Let Mappia deliver it fast!",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              shadows: [
-                                Shadow(
-                                  offset: const Offset(1, 1),
-                                  blurRadius: 3,
-                                  color: Colors.black.withAlpha((255 * 0.8).round()),
-                                ),
-                              ],
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              "Let Mappia deliver it fast!",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                shadows: [
+                                  Shadow(
+                                    offset: const Offset(1, 1),
+                                    blurRadius: 3,
+                                    color: Colors.black.withAlpha((255 * 0.8).round()),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -2195,6 +2311,9 @@ class _MenuScreenState extends State<MenuScreen> {
                                 builder: (context) => ViewAllScreen(
                                   cartItems: _cartItems,
                                   onAddToCart: _addToCart,
+                                  favoriteFoods: _favoriteFoods,
+                                  onToggleFavorite: _toggleFavorite,
+                                  isFavorite: _isFavorite,
                                 ),
                               ),
                             );
@@ -2210,67 +2329,18 @@ class _MenuScreenState extends State<MenuScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
                     // Horizontal scrollable food cards
-                    SizedBox(
-                      height: 120,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _foodItems.length,
-                        itemBuilder: (context, index) {
-                          return Container(
-                            width: 115,
-                            margin: const EdgeInsets.only(right: 5),
-                            child: Column(
-                              children: [
-                                Container(
-                                  width: 95,
-                                  height: 95,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withAlpha((255 * 0.1).round()),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.asset(
-                                      _foodItems[index]['image']!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => Container(
-                                        color: Colors.grey[200],
-                                        child: const Center(child: Icon(Icons.broken_image)),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  _foodItems[index]['name']!,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black87,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: buildFoodOfferPreview(),
                     ),
                   ],
                 ),
               ),
               // Recommended for you section
               Padding(
+                padding: const EdgeInsets.only(top: 24),
+                child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppConstants.paddingMedium,
                   vertical: AppConstants.paddingMedium,
@@ -2293,170 +2363,7 @@ class _MenuScreenState extends State<MenuScreen> {
                     ),
                     const SizedBox(height: 16),
                     // Horizontal scrollable recommended food cards
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 1.0, // Increased from 0.85 to make cards shorter
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemCount: _recommendedItems.length,
-                      itemBuilder: (context, index) {
-                        return GestureDetector(
-                          onTap: () => _showFoodDetailsModal(_recommendedItems[index]),
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withAlpha((255 * 0.1).round()),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Food image with heart icon
-                                Stack(
-                                  children: [
-                                    Container(
-                                      height: 100, // Increased from 80 to 100
-                                      decoration: BoxDecoration(
-                                        borderRadius: const BorderRadius.only(
-                                          topLeft: Radius.circular(12),
-                                          topRight: Radius.circular(12),
-                                        ),
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: const BorderRadius.only(
-                                          topLeft: Radius.circular(12),
-                                          topRight: Radius.circular(12),
-                                        ),
-                                        child: Image.asset(
-                                          _recommendedItems[index]['image'],
-                                          fit: BoxFit.cover,
-                                          width: double.infinity,
-                                          errorBuilder: (context, error, stackTrace) => Container(
-                                            color: Colors.grey[200],
-                                            child: const Center(child: Icon(Icons.broken_image)),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    // Heart icon overlay
-                                    Positioned(
-                                      top: 8,
-                                      right: 8,
-                                      child: GestureDetector(
-                                        onTap: () => _toggleFavorite(index),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(4),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withAlpha((255 * 0.9).round()),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            _recommendedItems[index]['isFavorite'] 
-                                                ? Icons.favorite 
-                                                : Icons.favorite_border,
-                                            size: 16,
-                                            color: AppConstants.primaryColor,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                // Food details
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4), // Reduced from 6 to 4 (33% reduction)
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        // Food name
-                                        Text(
-                                          _recommendedItems[index]['name'],
-                                          style: const TextStyle(
-                                            fontSize: 12, // Reduced font size
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.black87,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        // Food description (removed spacing)
-                                        Expanded(
-                                          child: Text(
-                                            _recommendedItems[index]['description'],
-                                            style: const TextStyle(
-                                              fontSize: 10, // Reduced font size
-                                              fontWeight: FontWeight.w400,
-                                              color: Colors.black54,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        // Price and add button row (removed spacing)
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            // Price
-                                            Expanded(
-                                              child: Text(
-                                                'SAR ${_recommendedItems[index]['price'].toStringAsFixed(2)}',
-                                                style: const TextStyle(
-                                                  fontSize: 12, // Reduced font size
-                                                  fontWeight: FontWeight.w700,
-                                                  color: AppConstants.primaryColor,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            // Add to cart button
-                                            GestureDetector(
-                                              onTap: () {
-                                                _addToCart(_recommendedItems[index], []);
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text('${_recommendedItems[index]['name']} added to cart!'),
-                                                    backgroundColor: AppConstants.primaryColor,
-                                                  ),
-                                                );
-                                              },
-                                              child: Container(
-                                                padding: const EdgeInsets.all(4),
-                                                decoration: BoxDecoration(
-                                                  color: AppConstants.primaryColor,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: const Icon(
-                                                  Icons.add,
-                                                  color: Colors.white,
-                                                  size: 14,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                    buildRecommendedFoods(),
                     const SizedBox(height: 16),
                     // See more button below the cards
                     Center(
@@ -2479,288 +2386,62 @@ class _MenuScreenState extends State<MenuScreen> {
                   ],
                 ),
               ),
-              // Merchants section
-              const SizedBox(height: 24),
-              Column(
-                children: List.generate(_merchants.length, (merchantIndex) {
-                  final merchant = _merchants[merchantIndex];
-                  final items = merchantIndex == 0 ? _blackPinoyItems : _sarapInasalItems;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 32),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Show 'Merchants' only for the first merchant
-                        if (merchantIndex == 0)
-                          Text(
-                            'Merchants',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.black87,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        if (merchantIndex == 0) const SizedBox(height: 12),
-                        // Merchant logo
-                        if (merchantIndex == 0)
-                          Center(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(60),
-                              child: Image.asset(
-                                merchant['image']!,
-                                width: 120,
-                                height: 120,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  color: Colors.grey[200],
-                                  width: 120,
-                                  height: 120,
-                                  child: const Center(child: Icon(Icons.broken_image, size: 48)),
-                                ),
-                              ),
+              ),
+              // Merchants section (new, under recommendations)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppConstants.paddingMedium,
+                  vertical: AppConstants.paddingMedium,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Merchants',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _isLoadingDynamicMerchants
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(20),
+                              child: CircularProgressIndicator(),
                             ),
                           )
-                        else
-                          Center(
-                            child: Image.asset(
-                              merchant['image']!,
-                              width: 120,
-                              height: 138,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: Colors.grey[200],
-                                width: 120,
-                                height: 138,
-                                child: const Center(child: Icon(Icons.broken_image, size: 48)),
-                              ),
-                            ),
-                          ),
-                        SizedBox(height: merchantIndex == 0 ? 12 : 4),
-                        // Logo name (repeat merchant name)
-                        Text(
-                          merchant['name']!,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        // Product cards grid (2x2)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 1.0,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                            ),
-                            itemCount: (items.length > 4) ? 4 : items.length,
-                            itemBuilder: (context, index) {
-                              return GestureDetector(
-                                onTap: () => _showFoodDetailsModal(items[index]),
-                                child: Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withAlpha((255 * 0.1).round()),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
+                        : _dynamicMerchants.isEmpty
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(20),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      // Food image (match recommended section)
-                                      Stack(
-                                        children: [
-                                          Container(
-                                            height: 100,
-                                            decoration: BoxDecoration(
-                                              borderRadius: const BorderRadius.only(
-                                                topLeft: Radius.circular(12),
-                                                topRight: Radius.circular(12),
-                                              ),
-                                            ),
-                                            child: ClipRRect(
-                                              borderRadius: const BorderRadius.only(
-                                                topLeft: Radius.circular(12),
-                                                topRight: Radius.circular(12),
-                                              ),
-                                              child: Image.asset(
-                                                items[index]['image'],
-                                                fit: BoxFit.cover,
-                                                width: double.infinity,
-                                                errorBuilder: (context, error, stackTrace) {
-                                                  print('Error loading image:  ${items[index]['image']} - $error');
-                                                  return Container(
-                                                  color: Colors.grey[200],
-                                                  child: const Center(child: Icon(Icons.broken_image)),
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                          // Heart icon overlay
-                                          Positioned(
-                                            top: 8,
-                                            right: 8,
-                                            child: GestureDetector(
-                                              onTap: () {
-                                                if (merchantIndex == 0) {
-                                                  _toggleBlackPinoyFavorite(index);
-                                                } else {
-                                                  _toggleSarapInasalFavorite(index);
-                                                }
-                                              },
-                                              child: Container(
-                                                padding: const EdgeInsets.all(4),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white.withAlpha((255 * 0.9).round()),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: Icon(
-                                                  items[index]['isFavorite'] 
-                                                      ? Icons.favorite 
-                                                      : Icons.favorite_border,
-                                                  size: 16,
-                                                  color: AppConstants.primaryColor,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                      Icon(Icons.store, size: 48, color: Colors.grey),
+                                      SizedBox(height: 16),
+                                      Text(
+                                        'No merchants available',
+                                        style: TextStyle(fontSize: 16, color: Colors.grey),
                                       ),
-                                      // Food details
-                                      Expanded(
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(4), // Match recommended section
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                items[index]['name'],
-                                                style: const TextStyle(
-                                                  fontSize: 12, // Match recommended section
-                                                  fontWeight: FontWeight.w700,
-                                                  color: Colors.black87,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              Expanded(
-                                                child: Text(
-                                                  items[index]['description'],
-                                                  style: const TextStyle(
-                                                    fontSize: 10, // Match recommended section
-                                                    fontWeight: FontWeight.w400,
-                                                    color: Colors.black54,
-                                                  ),
-                                                  maxLines: 2,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      'SAR ${items[index]['price'].toStringAsFixed(2)}',
-                                                      style: const TextStyle(
-                                                        fontSize: 12, // Match recommended section
-                                                        fontWeight: FontWeight.w700,
-                                                        color: AppConstants.primaryColor,
-                                                      ),
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  GestureDetector(
-                                                    onTap: () {
-                                                      _addToCart(items[index], []);
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text('${items[index]['name']} added to cart!'),
-                                                          backgroundColor: AppConstants.primaryColor,
-                                                        ),
-                                                      );
-                                                    },
-                                                    child: Container(
-                                                      padding: const EdgeInsets.all(4),
-                                                      decoration: BoxDecoration(
-                                                        color: AppConstants.primaryColor,
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                      child: const Icon(
-                                                        Icons.add,
-                                                        color: Colors.white,
-                                                        size: 14,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        'Check back later for new merchants',
+                                        style: TextStyle(fontSize: 12, color: Colors.grey),
                                       ),
                                     ],
                                   ),
                                 ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Show more products button
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.6,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => MerchantProductsScreen(
-                                    merchantName: merchant['name']!,
-                                    items: items,
-                                    cartItems: _cartItems,
-                                    onAddToCart: _addToCart,
-                                  ),
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppConstants.primaryColor,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25),
+                              )
+                            : Column(
+                                children: _dynamicMerchants.map((merchant) {
+                                  return buildMerchantPreview(merchant);
+                                }).toList(),
                               ),
-                              elevation: 2,
-                            ),
-                            child: const Text(
-                              'Show more products',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
+                  ],
+                ),
               ),
-              const SizedBox(height: 24),
               // Add bottom padding for navigation bar
               const SizedBox(height: 20),
             ],
@@ -2798,6 +2479,240 @@ class _MenuScreenState extends State<MenuScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget buildFoodOfferPreview() {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: fetchFoodsPreview(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox(height: 120, child: Center(child: CircularProgressIndicator()));
+        final foods = snapshot.data!;
+        return SizedBox(
+          height: 120,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: foods.length,
+            itemBuilder: (context, index) {
+              final food = foods[index];
+              return Container(
+                width: 115,
+                margin: const EdgeInsets.only(right: 5),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 95,
+                      height: 95,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha((255 * 0.1).round()),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: food['image_url'] != null && food['image_url'].toString().isNotEmpty
+                            ? Image.network(
+                                food['image_url'],
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  color: Colors.grey[200],
+                                  child: const Center(child: Icon(Icons.broken_image)),
+                                ),
+                              )
+                            : Container(
+                                color: Colors.grey[200],
+                                child: const Center(child: Icon(Icons.fastfood)),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      food['name'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildRecommendedFoods() {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: fetchRecommendedFoods(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox(height: 240, child: Center(child: CircularProgressIndicator()));
+        final foods = snapshot.data!;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.75,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+          ),
+          itemCount: foods.length,
+          itemBuilder: (context, index) {
+            final food = foods[index];
+            return GestureDetector(
+              onTap: () => _showFoodDetailsModal(food),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha((255 * 0.1).round()),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Stack(
+                      children: [
+                        Container(
+                          height: 120,
+                          decoration: BoxDecoration(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(12),
+                              topRight: Radius.circular(12),
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(12),
+                              topRight: Radius.circular(12),
+                            ),
+                            child: food['image_url'] != null && food['image_url'].toString().isNotEmpty
+                                ? Image.network(
+                                    food['image_url'],
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    errorBuilder: (context, error, stackTrace) => Container(
+                                      color: Colors.grey[200],
+                                      child: const Center(child: Icon(Icons.broken_image)),
+                                    ),
+                                  )
+                                : Container(
+                                    color: Colors.grey[200],
+                                    child: const Center(child: Icon(Icons.fastfood)),
+                                  ),
+                          ),
+                        ),
+                        // Heart icon overlay
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: () => _toggleFavorite(food),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withAlpha((255 * 0.9).round()),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                _isFavorite(food) ? Icons.favorite : Icons.favorite_border,
+                                size: 16,
+                                color: AppConstants.primaryColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              food['name'] ?? 'Food Item',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black87,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Expanded(
+                              child: Text(
+                                food['description'] ?? 'No description available',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.black54,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'SAR ${(food['price'] ?? 0.0).toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppConstants.primaryColor,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => _addToCart(food, []),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: AppConstants.primaryColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.add,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

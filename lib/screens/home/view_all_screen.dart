@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_constants.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ViewAllScreen extends StatefulWidget {
   final List<Map<String, dynamic>> cartItems;
   final void Function(Map<String, dynamic> item, List<Map<String, dynamic>> addOns) onAddToCart;
-  const ViewAllScreen({super.key, required this.cartItems, required this.onAddToCart});
+  final List<Map<String, dynamic>> favoriteFoods;
+  final void Function(Map<String, dynamic> food) onToggleFavorite;
+  final bool Function(Map<String, dynamic> food) isFavorite;
+  const ViewAllScreen({
+    super.key, 
+    required this.cartItems, 
+    required this.onAddToCart,
+    required this.favoriteFoods,
+    required this.onToggleFavorite,
+    required this.isFavorite,
+  });
 
   @override
   State<ViewAllScreen> createState() => _ViewAllScreenState();
@@ -16,8 +27,6 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
 
   final List<String> _categories = [
     'All',
-    'Black Pinoy',
-    'Sarap Inasal',
     'Dinner',
     'Breakfast',
     'Lunch',
@@ -26,380 +35,27 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
     'Drinks',
   ];
 
-  final List<Map<String, dynamic>> _allFoodItems = [
-    // Black Pinoy Items
-    {
-      'name': 'Beef Bulalo',
-      'image': 'assets/images/beef_bulalo.jpg',
-      'description': 'Classic Filipino beef soup with bone marrow.',
-      'price': 55.00,
-      'rating': 4.8,
-      'reviewCount': 89,
-      'category': 'Dinner',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Beef Kare-Kare',
-      'image': 'assets/images/beef_kare-kare.jpg',
-      'description': 'Rich peanut stew with tender beef and vegetables.',
-      'price': 50.00,
-      'rating': 4.7,
-      'reviewCount': 76,
-      'category': 'Dinner',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Beef Sisig',
-      'image': 'assets/images/beef_sisig.jpg',
-      'description': 'Sizzling chopped beef with onions and chili.',
-      'price': 45.00,
-      'rating': 4.6,
-      'reviewCount': 92,
-      'category': 'Dinner',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Buttered Chicken',
-      'image': 'assets/images/buttered_chicken.jpg',
-      'description': 'Crispy fried chicken tossed in butter sauce.',
-      'price': 38.00,
-      'rating': 4.5,
-      'reviewCount': 67,
-      'category': 'Dinner',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Bangsilog',
-      'image': 'assets/images/bangsilog.jpg',
-      'description': 'Crispy fried bangus, garlic rice, and a sunny-side egg — a classic Filipino breakfast that hits the spot any time of day!',
-      'price': 25.00,
-      'rating': 4.4,
-      'reviewCount': 45,
-      'category': 'Breakfast',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Beef Broccoli',
-      'image': 'assets/images/beef_broccoli.jpg',
-      'description': 'Tender slices of beef wok‑tossed with crisp broccoli florets in a savory garlic‑soy sauce.',
-      'price': 30.00,
-      'rating': 4.3,
-      'reviewCount': 58,
-      'category': 'Dinner',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Chicken Inasal',
-      'image': 'assets/images/chicken_inasal.jpg',
-      'description': 'Juicy, grilled chicken marinated in calamansi, garlic, and annatto oil — flame-grilled to smoky perfection.',
-      'price': 25.00,
-      'rating': 4.5,
-      'reviewCount': 78,
-      'category': 'Dinner',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Halo-halo',
-      'image': 'assets/images/halo-halo.jpg',
-      'description': 'A colorful Filipino dessert with crushed ice, creamy leche flan, sweet beans, ube, and gulaman — all mixed for the ultimate icy treat!',
-      'price': 15.00,
-      'rating': 4.6,
-      'reviewCount': 92,
-      'category': 'Dessert',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Fried Chicken',
-      'image': 'assets/images/fried_chicken_blackpinoy.jpg',
-      'description': 'Crispy on the outside, tender and juicy on the inside — our classic fried chicken is seasoned to perfection and fried golden brown.',
-      'price': 20.00,
-      'rating': 4.4,
-      'reviewCount': 156,
-      'category': 'Dinner',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Garlic Fried Rice',
-      'image': 'assets/images/garlic_friedrice.jpg',
-      'description': 'Aromatic rice stir-fried with golden garlic bits — simple, savory, and the perfect pairing for any meal!',
-      'price': 10.00,
-      'rating': 4.3,
-      'reviewCount': 89,
-      'category': 'Lunch',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Laing',
-      'image': 'assets/images/Laing.jpg',
-      'description': 'A rich, creamy Bicolano dish made with dried taro leaves simmered in coconut milk, chilies, and spices — earthy, spicy, and unforgettable.',
-      'price': 20.00,
-      'rating': 4.2,
-      'reviewCount': 67,
-      'category': 'Dinner',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Leche Flan',
-      'image': 'assets/images/leche_flan.jpg',
-      'description': 'A silky smooth caramel custard made with eggs, milk, and sugar — the perfect sweet ending to any Filipino meal.',
-      'price': 20.00,
-      'rating': 4.7,
-      'reviewCount': 134,
-      'category': 'Dessert',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Lomi',
-      'image': 'assets/images/Lomi.jpg',
-      'description': 'Thick egg noodles in a savory, hearty broth loaded with pork, vegetables, and egg — a warm, comforting Filipino favorite best enjoyed hot!',
-      'price': 25.00,
-      'rating': 4.5,
-      'reviewCount': 98,
-      'category': 'Dinner',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Pancit Canton',
-      'image': 'assets/images/pancit_canton.jpg',
-      'description': 'Stir-fried egg noodles tossed with vegetables, meat, and a flavorful soy-garlic sauce — a delicious Filipino staple perfect for any celebration!',
-      'price': 20.00,
-      'rating': 4.4,
-      'reviewCount': 112,
-      'category': 'Dinner',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Samalamig',
-      'image': 'assets/images/samalamig.jpg',
-      'description': 'A sweet, refreshing Filipino drink made with gulaman, sago, and flavored syrup — perfect to cool you down any time of the day!',
-      'price': 10.00,
-      'rating': 4.3,
-      'reviewCount': 76,
-      'category': 'Drinks',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Steamed Siomai',
-      'image': 'assets/images/steamed_siomai.jpg',
-      'description': 'Tender dumplings filled with seasoned meat and vegetables, steamed to juicy perfection — served with soy sauce, calamansi, and chili garlic oil.',
-      'price': 12.00,
-      'rating': 4.6,
-      'reviewCount': 145,
-      'category': 'Snack',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Sweet and Sour Tilapia',
-      'image': 'assets/images/sweet_sour_tilapia.jpg',
-      'description': 'Crispy-fried tilapia topped with a vibrant sweet and sour sauce made with bell peppers, onions, and pineapples — a tangy twist you\'ll crave again and again!',
-      'price': 30.00,
-      'rating': 4.4,
-      'reviewCount': 88,
-      'category': 'Dinner',
-      'merchant': 'Black Pinoy',
-    },
-    {
-      'name': 'Tofu Sisig',
-      'image': 'assets/images/tofu_sisig.jpg',
-      'description': 'Sizzling tofu cubes tossed in a creamy, spicy sisig sauce with onions and chili — a guilt-free, flavorful plant-based take on a Filipino favorite.',
-      'price': 18.00,
-      'rating': 4.2,
-      'reviewCount': 54,
-      'category': 'Dinner',
-      'merchant': 'Black Pinoy',
-    },
-    // Sarap Inasal Items
-    {
-      'name': 'Fried Rice',
-      'image': 'assets/images/fried_rice.jpg',
-      'description': 'Delicious fried rice with vegetables, eggs, and special seasonings.',
-      'price': 18.00,
-      'rating': 4.4,
-      'reviewCount': 45,
-      'category': 'Lunch',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Sinigang na Salmon',
-      'image': 'assets/images/sinigang_salmon.jpg',
-      'description': 'Sour tamarind soup with fresh salmon and vegetables.',
-      'price': 45.00,
-      'rating': 4.9,
-      'reviewCount': 78,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Chicharon Bulaklak',
-      'image': 'assets/images/chicharon_bulaklak.jpg',
-      'description': 'Crispy pork rinds made from pork intestines, perfect appetizer.',
-      'price': 25.00,
-      'rating': 4.3,
-      'reviewCount': 34,
-      'category': 'Snack',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Mixed Seafoods',
-      'image': 'assets/images/mixed_seafoods.jpg',
-      'description': 'Fresh seafood medley with shrimp, fish, and calamari.',
-      'price': 55.00,
-      'rating': 4.8,
-      'reviewCount': 56,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Tapsilog',
-      'image': 'assets/images/Tapsilog.jpg',
-      'description': 'Tender beef tapa marinated in sweet and savory spices, served with garlic fried rice and a perfectly cooked sunny-side egg — a classic Filipino all-day breakfast!',
-      'price': 20.00,
-      'rating': 4.5,
-      'reviewCount': 78,
-      'category': 'Breakfast',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Sinigang Spare Ribs',
-      'image': 'assets/images/sinigang_spare-ribs.jpg',
-      'description': 'A comforting bowl of sour tamarind broth loaded with fall-off-the-bone beef spare ribs, fresh vegetables, and just the right level of tang — the ultimate Filipino comfort food.',
-      'price': 35.00,
-      'rating': 4.6,
-      'reviewCount': 92,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Beef Bulalo',
-      'image': 'assets/images/bulalo_sarap-inasal.jpg',
-      'description': 'A rich, slow-cooked beef shank soup with bone marrow, corn, cabbage, and vegetables — warm, hearty, and perfect for sharing!',
-      'price': 35.00,
-      'rating': 4.8,
-      'reviewCount': 89,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Beef Sisig',
-      'image': 'assets/images/sisig-sarap-inasal.jpg',
-      'description': 'Sizzling chopped beef seasoned with onions, chili, and calamansi — served on a hot plate for that irresistible smoky flavor and crunch!',
-      'price': 30.00,
-      'rating': 4.6,
-      'reviewCount': 92,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Halo-Halo',
-      'image': 'assets/images/Halo-Halo_sarapinasal.jpg',
-      'description': 'A colorful Filipino dessert layered with crushed ice, sweetened fruits, gulaman, leche flan, and ube — topped with evaporated milk for a truly refreshing treat!',
-      'price': 18.00,
-      'rating': 4.6,
-      'reviewCount': 92,
-      'category': 'Dessert',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Buttered Chicken',
-      'image': 'assets/images/buttered_chicken-sarapinasal.png',
-      'description': 'Crispy fried chicken glazed in a rich, buttery garlic sauce — savory, sweet, and addictively good with every bite!',
-      'price': 28.00,
-      'rating': 4.5,
-      'reviewCount': 67,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Fried Boneless Bangus',
-      'image': 'assets/images/boneless-bangus.jpg',
-      'description': 'Crispy, golden-fried boneless milkfish seasoned to perfection — flaky, flavorful, and mess-free for an easy, delicious meal.',
-      'price': 25.00,
-      'rating': 4.4,
-      'reviewCount': 45,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Grilled T-bone Steak',
-      'image': 'assets/images/t-bone-steak.jpg',
-      'description': 'Juicy, tender T-bone steak grilled just right, seasoned with herbs and served with your choice of sides — a hearty feast for steak lovers.',
-      'price': 90.00,
-      'rating': 4.9,
-      'reviewCount': 156,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Lomi',
-      'image': 'assets/images/Lomi-sarapinasal.jpg',
-      'description': 'Thick, hearty egg noodles swimming in a rich, savory broth loaded with tender meat, veggies, and egg — the ultimate Filipino comfort soup.',
-      'price': 25.00,
-      'rating': 4.5,
-      'reviewCount': 98,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Milktea',
-      'image': 'assets/images/milktea.jpg',
-      'description': 'Creamy, refreshing milk tea with chewy tapioca pearls — a perfect sweet treat to sip anytime, anywhere.',
-      'price': 15.00,
-      'rating': 4.3,
-      'reviewCount': 76,
-      'category': 'Drinks',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Pancit Batil Patung',
-      'image': 'assets/images/pancit_batil_patung.jpg',
-      'description': 'A traditional Filipino noodle dish featuring sautéed vegetables, savory meat strips, and a flavorful sauce — a wholesome, satisfying meal full of local flavors.',
-      'price': 20.00,
-      'rating': 4.4,
-      'reviewCount': 112,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Pancit Palabok',
-      'image': 'assets/images/palabok.jpg',
-      'description': 'Rice noodles topped with a rich, garlicky shrimp sauce, crunchy chicharrón, boiled eggs, and fresh green onions — a classic crowd-pleaser bursting with flavor!',
-      'price': 25.00,
-      'rating': 4.7,
-      'reviewCount': 134,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Filipino Spaghetti',
-      'image': 'assets/images/pinoy_spaghetti.jpg',
-      'description': 'Sweet-style spaghetti loaded with savory ground meat, sliced hotdogs, and a rich, tangy tomato sauce — a Filipino party favorite loved by kids and adults alike.',
-      'price': 20.00,
-      'rating': 4.5,
-      'reviewCount': 145,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Balbacua',
-      'image': 'assets/images/balbacua.jpg',
-      'description': 'Slow-cooked beef stew simmered until tender with rich spices and collagen-rich tendons — a hearty, flavorful dish perfect for meat lovers craving deep Filipino flavors.',
-      'price': 40.00,
-      'rating': 4.6,
-      'reviewCount': 88,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-    {
-      'name': 'Sinigang na Hipon',
-      'image': 'assets/images/sinigang-hipon.jpg',
-      'description': 'A tangy tamarind-based soup loaded with fresh, juicy shrimp and crisp vegetables — a comforting Filipino classic that\'s both flavorful and refreshing.',
-      'price': 28.00,
-      'rating': 4.4,
-      'reviewCount': 88,
-      'category': 'Dinner',
-      'merchant': 'Sarap Inasal',
-    },
-  ];
+  // Add state for dynamic food items
+  List<Map<String, dynamic>> _allFoodItems = [];
+  bool _isLoadingFoods = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAllFoods();
+  }
+
+  Future<void> _fetchAllFoods() async {
+    setState(() => _isLoadingFoods = true);
+    final response = await Supabase.instance.client
+        .from('foods')
+        .select()
+        .order('created_at', ascending: false);
+    setState(() {
+      _allFoodItems = List<Map<String, dynamic>>.from(response as List);
+      _isLoadingFoods = false;
+    });
+  }
 
   List<Map<String, dynamic>> get _filteredFoodItems {
     String searchQuery = _searchController.text.toLowerCase();
@@ -409,33 +65,130 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
     if (searchQuery.isNotEmpty) {
       filteredItems = filteredItems.where((item) {
         return item['name'].toString().toLowerCase().contains(searchQuery) ||
-               item['description'].toString().toLowerCase().contains(searchQuery) ||
-               item['merchant'].toString().toLowerCase().contains(searchQuery);
+               item['description'].toString().toLowerCase().contains(searchQuery);
       }).toList();
     }
+    
+    // Filter by category if not 'All'
+    if (_selectedCategoryIndex > 0) {
+      final selectedCategory = _categories[_selectedCategoryIndex];
+      filteredItems = filteredItems.where((item) {
+        return _isFoodInCategory(item, selectedCategory);
+      }).toList();
+    }
+    return filteredItems;
+  }
 
-    // Filter by category
-    if (_selectedCategoryIndex == 0) {
-      // Show all items (already filtered by search) - sort alphabetically
-      filteredItems.sort((a, b) => a['name'].toString().compareTo(b['name'].toString()));
-      return filteredItems;
-    } else if (_selectedCategoryIndex == 1) {
-      // Black Pinoy
-      filteredItems = filteredItems.where((item) => item['merchant'] == 'Black Pinoy').toList();
-      filteredItems.sort((a, b) => a['name'].toString().compareTo(b['name'].toString()));
-      return filteredItems;
-    } else if (_selectedCategoryIndex == 2) {
-      // Sarap Inasal
-      filteredItems = filteredItems.where((item) => item['merchant'] == 'Sarap Inasal').toList();
-      filteredItems.sort((a, b) => a['name'].toString().compareTo(b['name'].toString()));
-      return filteredItems;
-    } else {
-      // Filter by selected category, mapping plural to singular where needed
-      String selectedCategory = _categories[_selectedCategoryIndex];
-      if (selectedCategory == 'Desserts') selectedCategory = 'Dessert';
-      filteredItems = filteredItems.where((item) => item['category'] == selectedCategory).toList();
-      filteredItems.sort((a, b) => a['name'].toString().compareTo(b['name'].toString()));
-      return filteredItems;
+  bool _isFoodInCategory(Map<String, dynamic> food, String category) {
+    final name = food['name']?.toString().toLowerCase() ?? '';
+    final description = food['description']?.toString().toLowerCase() ?? '';
+    final combinedText = '$name $description';
+
+    switch (category.toLowerCase()) {
+      case 'dinner':
+        return combinedText.contains('dinner') ||
+               combinedText.contains('steak') ||
+               combinedText.contains('t-bone') ||
+               combinedText.contains('pasta') ||
+               combinedText.contains('rice') ||
+               combinedText.contains('chicken') ||
+               combinedText.contains('beef') ||
+               combinedText.contains('fish') ||
+               combinedText.contains('seafood') ||
+               combinedText.contains('salmon') ||
+               combinedText.contains('tilapia') ||
+               combinedText.contains('bulalo') ||
+               combinedText.contains('sisig') ||
+               combinedText.contains('kare-kare') ||
+               combinedText.contains('sinigang') ||
+               combinedText.contains('broccoli') ||
+               combinedText.contains('mixed seafood') ||
+               combinedText.contains('spare ribs') ||
+               combinedText.contains('hipon') ||
+               combinedText.contains('bangus') ||
+               combinedText.contains('boneless');
+      
+      case 'breakfast':
+        return combinedText.contains('breakfast') ||
+               combinedText.contains('egg') ||
+               combinedText.contains('bacon') ||
+               combinedText.contains('pancake') ||
+               combinedText.contains('waffle') ||
+               combinedText.contains('toast') ||
+               combinedText.contains('tapsilog') ||
+               combinedText.contains('bangsilog') ||
+               combinedText.contains('longganisa') ||
+               combinedText.contains('tocino') ||
+               combinedText.contains('garlic fried rice') ||
+               combinedText.contains('fried rice');
+      
+      case 'lunch':
+        return combinedText.contains('lunch') ||
+               combinedText.contains('meal') ||
+               combinedText.contains('rice') ||
+               combinedText.contains('rice bowl') ||
+               combinedText.contains('noodles') ||
+               combinedText.contains('pancit') ||
+               combinedText.contains('pancit canton') ||
+               combinedText.contains('pancit batil patung') ||
+               combinedText.contains('spaghetti') ||
+               combinedText.contains('pinoy spaghetti') ||
+               combinedText.contains('adobo') ||
+               combinedText.contains('kaldereta') ||
+               combinedText.contains('menudo') ||
+               combinedText.contains('palabok') ||
+               combinedText.contains('lomi') ||
+               combinedText.contains('buttered chicken') ||
+               combinedText.contains('chicken inasal') ||
+               combinedText.contains('fried chicken') ||
+               combinedText.contains('balbacua') ||
+               combinedText.contains('laing');
+      
+      case 'snacks':
+        return combinedText.contains('snack') ||
+               combinedText.contains('fries') ||
+               combinedText.contains('french fries') ||
+               combinedText.contains('chips') ||
+               combinedText.contains('popcorn') ||
+               combinedText.contains('lumpia') ||
+               combinedText.contains('siomai') ||
+               combinedText.contains('steamed siomai') ||
+               combinedText.contains('chicharon') ||
+               combinedText.contains('chicharon bulaklak') ||
+               combinedText.contains('nuggets') ||
+               combinedText.contains('burger') ||
+               combinedText.contains('onion rings');
+      
+      case 'desserts':
+        return combinedText.contains('dessert') ||
+               combinedText.contains('cake') ||
+               combinedText.contains('chocolate cake') ||
+               combinedText.contains('ice cream') ||
+               combinedText.contains('flan') ||
+               combinedText.contains('leche flan') ||
+               combinedText.contains('halo-halo') ||
+               combinedText.contains('buko pandan') ||
+               combinedText.contains('leche') ||
+               combinedText.contains('sweet') ||
+               combinedText.contains('chocolate') ||
+               combinedText.contains('sweet sour');
+      
+      case 'drinks':
+        return combinedText.contains('drink') ||
+               combinedText.contains('juice') ||
+               combinedText.contains('fresh juice') ||
+               combinedText.contains('soda') ||
+               combinedText.contains('soft drink') ||
+               combinedText.contains('coffee') ||
+               combinedText.contains('tea') ||
+               combinedText.contains('milk') ||
+               combinedText.contains('water') ||
+               combinedText.contains('smoothie') ||
+               combinedText.contains('milktea') ||
+               combinedText.contains('samalamig');
+      
+      default:
+        return true;
     }
   }
 
@@ -450,270 +203,248 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
     return Scaffold(
       backgroundColor: AppConstants.backgroundColor,
       appBar: AppBar(
+        title: const Text('All Foods'),
         backgroundColor: AppConstants.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Search bar (moved up, less vertical padding)
-            Container(
-              color: AppConstants.primaryColor,
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8), // less top/bottom padding
-              child: Container(
-                height: 44, // slightly smaller
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(25),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+      body: _isLoadingFoods
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'Search foods...',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search for food...',
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: AppConstants.primaryColor,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
+                    onChanged: (value) => setState(() {}),
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      // Implement search functionality here
-                    });
-                  },
                 ),
-              ),
-            ),
-            // Category pills
-            Container(
-              color: AppConstants.primaryColor,
-              padding: const EdgeInsets.only(bottom: 12), // less bottom padding
-              child: SizedBox(
-                height: 40,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _categories.length,
-                  itemBuilder: (context, index) {
-                    final isSelected = index == _selectedCategoryIndex;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedCategoryIndex = index;
-                        });
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 12),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isSelected ? Colors.white : Colors.white.withAlpha(51),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          _categories[index],
-                          style: TextStyle(
-                            color: isSelected ? AppConstants.primaryColor : Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            // Food items grid
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8), // reduced bottom padding
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.95, // make cards shorter (was 0.75)
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemCount: _filteredFoodItems.length,
-                  itemBuilder: (context, index) {
-                    final item = _filteredFoodItems[index];
-                    return GestureDetector(
-                      onTap: () => _showFoodDetailsModal(item),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withAlpha(25),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Food image
-                            Stack(
-                              children: [
-                                Container(
-                                  height: 90, // was 120, now shorter
-                                  decoration: BoxDecoration(
-                                    borderRadius: const BorderRadius.only(
-                                      topLeft: Radius.circular(12),
-                                      topRight: Radius.circular(12),
-                                    ),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: const BorderRadius.only(
-                                      topLeft: Radius.circular(12),
-                                      topRight: Radius.circular(12),
-                                    ),
-                                    child: Image.asset(
-                                      item['image'],
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      errorBuilder: (context, error, stackTrace) => Container(
-                                        color: Colors.grey[200],
-                                        child: const Center(child: Icon(Icons.broken_image)),
-                                      ),
-                                    ),
-                                  ),
+                Container(
+                  height: 45,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _categories.length,
+                    itemBuilder: (context, index) {
+                      final isSelected = _selectedCategoryIndex == index;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedCategoryIndex = index;
+                            });
+                          },
+                                                      child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppConstants.primaryColor : Colors.white,
+                              borderRadius: BorderRadius.circular(25),
+                              border: Border.all(
+                                color: isSelected ? AppConstants.primaryColor : Colors.grey[300]!,
+                                width: 1.5,
+                              ),
+                              boxShadow: isSelected ? [
+                                BoxShadow(
+                                  color: AppConstants.primaryColor.withAlpha((255 * 0.3).round()),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
-                                // Merchant badge
-                                if (item['merchant'] != 'General')
-                                  Positioned(
-                                    top: 8,
-                                    left: 8,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: item['merchant'] == 'Black Pinoy' 
-                                            ? Colors.black.withAlpha(204)
-                                            : AppConstants.primaryColor.withAlpha(204),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        item['merchant'],
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
+                              ] : null,
                             ),
-                            // Food details
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8), // reduced from 12 to 8
+                            child: Center(
+                              child: Text(
+                                _categories[index],
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Colors.black87,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Expanded(
+                  child: _filteredFoodItems.isEmpty
+                      ? const Center(child: Text('No foods found.'))
+                      : GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.75,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                          itemCount: _filteredFoodItems.length,
+                          itemBuilder: (context, index) {
+                            final food = _filteredFoodItems[index];
+                            return GestureDetector(
+                              onTap: () => _showFoodDetailsModal(food),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha((255 * 0.1).round()),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Food name
-                                    Text(
-                                      item['name'],
-                                      style: const TextStyle(
-                                        fontSize: 13, // reduced from 14
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    // Merchant name
-                                    if (item['merchant'] != 'General')
-                                      Text(
-                                        item['merchant'],
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color: item['merchant'] == 'Black Pinoy' 
-                                              ? Colors.black
-                                              : AppConstants.primaryColor,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    const SizedBox(height: 2), // reduced from 4
-                                    // Description
-                                    Text(
-                                      item['description'],
-                                      style: const TextStyle(
-                                        fontSize: 10, // reduced from 11
-                                        color: Colors.black54,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const Spacer(),
-                                    // Price and rating at bottom
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    Stack(
                                       children: [
-                                        // Price on left
-                                        Text(
-                                          'SAR ${item['price'].toStringAsFixed(2)}',
-                                          style: TextStyle(
-                                            fontSize: 13, // reduced from 14
-                                            fontWeight: FontWeight.bold,
-                                            color: AppConstants.primaryColor,
+                                        Container(
+                                          height: 120,
+                                          decoration: BoxDecoration(
+                                            borderRadius: const BorderRadius.only(
+                                              topLeft: Radius.circular(12),
+                                              topRight: Radius.circular(12),
+                                            ),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius: const BorderRadius.only(
+                                              topLeft: Radius.circular(12),
+                                              topRight: Radius.circular(12),
+                                            ),
+                                            child: food['image_url'] != null && food['image_url'].toString().isNotEmpty
+                                                ? Image.network(
+                                                    food['image_url'],
+                                                    fit: BoxFit.cover,
+                                                    width: double.infinity,
+                                                    errorBuilder: (context, error, stackTrace) => Container(
+                                                      color: Colors.grey[200],
+                                                      child: const Center(child: Icon(Icons.broken_image)),
+                                                    ),
+                                                  )
+                                                : Container(
+                                                    color: Colors.grey[200],
+                                                    child: const Center(child: Icon(Icons.fastfood)),
+                                                  ),
                                           ),
                                         ),
-                                        // Rating on right
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.star,
-                                              size: 12, // reduced from 14
-                                              color: Colors.amber[600],
-                                            ),
-                                            const SizedBox(width: 2), // reduced from 4
-                                            Text(
-                                              '${item['rating']}',
-                                              style: const TextStyle(
-                                                fontSize: 11, // reduced from 12
-                                                fontWeight: FontWeight.w600,
+                                        // Heart icon overlay
+                                        Positioned(
+                                          top: 8,
+                                          right: 8,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              widget.onToggleFavorite(food);
+                                              setState(() {}); // Force rebuild to update heart icon
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withAlpha((255 * 0.9).round()),
+                                                shape: BoxShape.circle,
                                               ),
+                                              child: Icon(
+                                                widget.isFavorite(food) ? Icons.favorite : Icons.favorite_border,
+                                                size: 16,
+                                                color: AppConstants.primaryColor,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              food['name'] ?? 'Food Item',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.black87,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Expanded(
+                                              child: Text(
+                                                food['description'] ?? 'No description available',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w400,
+                                                  color: Colors.black54,
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    'SAR ${(food['price'] ?? 0.0).toStringAsFixed(2)}',
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: AppConstants.primaryColor,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    widget.onAddToCart(food, []);
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text('${food['name'] ?? 'Food Item'} added to cart!'),
+                                                        backgroundColor: AppConstants.primaryColor,
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: Container(
+                                                    padding: const EdgeInsets.all(6),
+                                                    decoration: BoxDecoration(
+                                                      color: AppConstants.primaryColor,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.add,
+                                                      color: Colors.white,
+                                                      size: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                      ],
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      ),
-                    );
-                  },
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -763,18 +494,31 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.zero,
-                      child: Image.asset(
-                        foodItem['image'],
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[200],
-                          width: double.infinity,
-                          height: double.infinity,
-                          child: const Center(child: Icon(Icons.broken_image)),
-                        ),
-                      ),
+                      child: foodItem['image_url'] != null && foodItem['image_url'].toString().isNotEmpty
+                          ? Image.network(
+                              foodItem['image_url'],
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey[200],
+                                width: double.infinity,
+                                height: double.infinity,
+                                child: const Center(child: Icon(Icons.broken_image)),
+                              ),
+                            )
+                          : Image.asset(
+                              foodItem['image'] ?? 'assets/images/food_image_1.jpg',
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey[200],
+                                width: double.infinity,
+                                height: double.infinity,
+                                child: const Center(child: Icon(Icons.broken_image)),
+                              ),
+                            ),
                     ),
                     // Overlay close button in the top right
                     Positioned(
@@ -810,7 +554,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                 ),
               ),
               Expanded(
-                child: Padding(
+                child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -821,7 +565,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              foodItem['name'],
+                              foodItem['name'] ?? 'Food Item',
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -838,7 +582,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${foodItem['rating']} (${foodItem['reviewCount']})',
+                                '${foodItem['rating'] ?? 4.5} (${foodItem['reviewCount'] ?? 50})',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -850,7 +594,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        foodItem['description'],
+                        foodItem['description'] ?? 'No description available',
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.black54,
@@ -973,6 +717,7 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
+                      const SizedBox(height: 20), // Extra bottom padding
                     ],
                   ),
                 ),
