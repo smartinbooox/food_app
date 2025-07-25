@@ -2,23 +2,27 @@ import 'package:flutter/material.dart';
 
 class AppConstants {
   // App Colors
-  static const Color primaryColor = Color(0xFF8B0000);
-  static const Color secondaryColor = Color(0xFFFF6B35);
-  static const Color backgroundColor = Color(0xFFF5F5F5);
-  static const Color textColor = Color(0xFF333333);
+  static const Color primaryColor = Color(0xFF800000); // Maroon
+  static const Color secondaryColor = Color(0xFFFFC300); // Gold
+  static const Color tertiaryColor = Color(0xFFF5F5F5); // Soft Gray
+  static const Color backgroundColor = Color(0xFFF8F8F8); // App background
+  static const Color cardColor = Colors.white;
+  static const Color textColor = Color(0xFF222222);
+  static const Color textOnPrimary = Colors.white;
+  static const Color textOnSecondary = Color(0xFF800000); // Maroon on gold
   static const Color errorColor = Color(0xFFD32F2F);
   static const Color successColor = Color(0xFF388E3C);
   static const Color warningColor = Color(0xFFFFA000);
 
   // Text Styles
   static const TextStyle headingStyle = TextStyle(
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: FontWeight.bold,
     color: textColor,
   );
 
   static const TextStyle subheadingStyle = TextStyle(
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: FontWeight.w600,
     color: textColor,
   );
@@ -31,6 +35,41 @@ class AppConstants {
   static const TextStyle captionStyle = TextStyle(
     fontSize: 14,
     color: Colors.grey,
+  );
+
+  static const TextStyle buttonTextPrimary = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    color: textOnPrimary,
+  );
+
+  static const TextStyle buttonTextSecondary = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    color: textOnSecondary,
+  );
+
+  // Button Styles
+  static final ButtonStyle primaryButton = ElevatedButton.styleFrom(
+    backgroundColor: primaryColor,
+    foregroundColor: textOnPrimary,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(borderRadiusMedium),
+    ),
+    textStyle: buttonTextPrimary,
+    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+    elevation: 2,
+  );
+
+  static final ButtonStyle secondaryButton = ElevatedButton.styleFrom(
+    backgroundColor: secondaryColor,
+    foregroundColor: textOnSecondary,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(borderRadiusMedium),
+    ),
+    textStyle: buttonTextSecondary,
+    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+    elevation: 2,
   );
 
   // Spacing

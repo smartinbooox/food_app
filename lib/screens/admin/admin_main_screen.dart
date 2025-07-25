@@ -5,6 +5,10 @@ import '../auth/login_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
+import 'package:uuid/uuid.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+import '../../core/constants/app_constants.dart';
 
 class AdminMainScreen extends StatefulWidget {
   const AdminMainScreen({super.key});
@@ -350,7 +354,7 @@ class _ManageScreenState extends State<_ManageScreen> {
                                 ? Image.network(food['image_url'], width: 50, height: 50, fit: BoxFit.cover)
                                 : const Icon(Icons.fastfood, size: 40),
                             title: Text(food['name'] ?? ''),
-                            subtitle: Text('SAR ${food['price']?.toStringAsFixed(2) ?? ''}\n${food['description'] ?? ''}'),
+                            subtitle: Text('SAR  ${food['price']?.toStringAsFixed(2) ?? ''}\n${food['description'] ?? ''}'),
                             isThreeLine: true,
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -396,7 +400,7 @@ class _ReportScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reports'),
-        backgroundColor: const Color(0xFF800000),
+        backgroundColor: AppConstants.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -428,8 +432,64 @@ class _ReportScreen extends StatelessWidget {
 
 // Remove FoodManagementScreen and its state class entirely
 
-class _SettingsScreen extends StatelessWidget {
+class _SettingsScreen extends StatefulWidget {
   const _SettingsScreen();
+
+  @override
+  State<_SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<_SettingsScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _contactController = TextEditingController();
+  String _selectedRole = 'rider';
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _contactController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _addUser() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() { _isLoading = true; });
+    try {
+      final uuid = Uuid();
+      final userId = uuid.v4();
+      final bytes = utf8.encode(_passwordController.text);
+      final hashedPassword = sha256.convert(bytes).toString();
+      final response = await Supabase.instance.client.from('users').insert({
+        'id': userId,
+        'name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'password': hashedPassword,
+        'contact': _contactController.text.trim(),
+        'role': _selectedRole,
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User added successfully!'), backgroundColor: AppConstants.primaryColor),
+        );
+        _formKey.currentState!.reset();
+        _selectedRole = 'rider';
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error:  ${e.toString()}'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() { _isLoading = false; });
+    }
+  }
 
   void _showLogoutConfirmation(BuildContext context) {
     showDialog(
@@ -467,7 +527,7 @@ class _SettingsScreen extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Logged out successfully!'),
-            backgroundColor: Color(0xFF800000),
+            backgroundColor: AppConstants.primaryColor,
           ),
         );
       }
@@ -488,62 +548,228 @@ class _SettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
-        backgroundColor: const Color(0xFF800000),
+        backgroundColor: AppConstants.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Admin Settings',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 24),
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Admin Settings',
+                style: AppConstants.headingStyle,
               ),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.admin_panel_settings),
-                    title: const Text('Admin Panel'),
-                    subtitle: const Text('Manage system settings'),
-                    trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Admin Panel coming soon!')),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.security),
-                    title: const Text('Security'),
-                    subtitle: const Text('Manage security settings'),
-                    trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Security settings coming soon!')),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.logout, color: Colors.red),
-                    title: const Text('Logout', style: TextStyle(color: Colors.red)),
-                    subtitle: const Text('Sign out of admin account'),
-                    trailing: const Icon(Icons.arrow_forward_ios, color: Colors.red),
-                    onTap: () => _showLogoutConfirmation(context),
-                  ),
-                ],
+              const SizedBox(height: 24),
+              // Add User Form
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Colored header with icon
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppConstants.primaryColor,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                        ),
+                      ),
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      child: Row(
+                        children: [
+                          Icon(Icons.person_add, color: Colors.white),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Add User (Rider/Restaurant)',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _nameController,
+                              decoration: InputDecoration(
+                                labelText: 'Name',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                                ),
+                                prefixIcon: const Icon(Icons.person),
+                              ),
+                              validator: (value) => value == null || value.isEmpty ? 'Enter name' : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _emailController,
+                              decoration: InputDecoration(
+                                labelText: 'Email',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                                ),
+                                prefixIcon: const Icon(Icons.email),
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) return 'Enter email';
+                                final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                                if (!emailRegex.hasMatch(value)) return 'Enter valid email';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _passwordController,
+                              decoration: InputDecoration(
+                                labelText: 'Password',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                                ),
+                                prefixIcon: const Icon(Icons.lock),
+                              ),
+                              obscureText: true,
+                              validator: (value) => value == null || value.isEmpty ? 'Enter password' : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _contactController,
+                              decoration: InputDecoration(
+                                labelText: 'Contact',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                                ),
+                                prefixIcon: const Icon(Icons.phone),
+                              ),
+                              validator: (value) => value == null || value.isEmpty ? 'Enter contact' : null,
+                            ),
+                            const SizedBox(height: 16),
+                            DropdownButtonFormField<String>(
+                              value: _selectedRole,
+                              items: const [
+                                DropdownMenuItem(value: 'rider', child: Text('Rider')),
+                                DropdownMenuItem(value: 'restaurant', child: Text('Restaurant')),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) setState(() { _selectedRole = value; });
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Role',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                                ),
+                                prefixIcon: const Icon(Icons.group),
+                              ),
+                              dropdownColor: Colors.white,
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _isLoading ? null : _addUser,
+                                style: AppConstants.primaryButton,
+                                icon: _isLoading
+                                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                    : const Icon(Icons.person_add, color: Colors.white),
+                                label: Text(
+                                  _isLoading ? 'Adding...' : 'Add User',
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 32),
+              // Settings Card
+              Card(
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: Icon(Icons.admin_panel_settings, color: AppConstants.primaryColor),
+                      title: Text('Admin Panel', style: TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: Text('Manage system settings'),
+                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                Icon(Icons.info, color: Colors.white),
+                                const SizedBox(width: 8),
+                                Text('Admin Panel coming soon!'),
+                              ],
+                            ),
+                            backgroundColor: AppConstants.primaryColor,
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: Icon(Icons.security, color: AppConstants.primaryColor),
+                      title: Text('Security', style: TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: Text('Manage security settings'),
+                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                Icon(Icons.info, color: Colors.white),
+                                const SizedBox(width: 8),
+                                Text('Security settings coming soon!'),
+                              ],
+                            ),
+                            backgroundColor: AppConstants.primaryColor,
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: Icon(Icons.logout, color: Colors.red),
+                      title: Text('Logout', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+                      subtitle: Text('Sign out of admin account'),
+                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.red),
+                      onTap: () => _showLogoutConfirmation(context),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -589,7 +815,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
             },
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.white,
-            selectedItemColor: const Color(0xFF800000),
+            selectedItemColor: AppConstants.primaryColor,
             unselectedItemColor: Colors.grey,
             selectedLabelStyle: const TextStyle(fontSize: 0),
             unselectedLabelStyle: const TextStyle(fontSize: 0),

@@ -7,6 +7,8 @@ import '../home/menu_screen.dart';
 import '../admin/admin_main_screen.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
+import '../restaurant/restaurant_dashboard_screen.dart';
+import '../rider/rider_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final String? initialEmail;
@@ -83,12 +85,20 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        // Customer: check password hash
+        // Non-admin: check password hash
         if (userData['password'] == hashedPassword) {
+          Widget nextScreen;
+          if (role == 'rider') {
+            nextScreen = const RiderDashboardScreen();
+          } else if (role == 'restaurant') {
+            nextScreen = const RestaurantDashboardScreen();
+          } else {
+            nextScreen = MenuScreen(userName: name);
+          }
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => MenuScreen(userName: name),
+              builder: (context) => nextScreen,
             ),
           );
         } else {
