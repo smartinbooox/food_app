@@ -149,7 +149,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final PageController _pageController = PageController();
+    final PageController _pageController = PageController(initialPage: 500); // Start in middle for infinite scroll
     int _currentPage = 0;
     return StatefulBuilder(
       builder: (context, setState) {
@@ -166,54 +166,337 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: [
                 SizedBox(
                   height: 260, // Adjust as needed for card height
-                  child: PageView(
+                  child: PageView.builder(
                     controller: _pageController,
-                    onPageChanged: (index) => setState(() => _currentPage = index),
-                    children: [
-                      // First Page: Overall User (full width) + 3 cards row
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Card(
-                              elevation: 4,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              margin: EdgeInsets.zero,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-                                child: Column(
-                                  children: [
-                                    const Text(
-                                      'Overall User',
-                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    onPageChanged: (index) {
+                      setState(() => _currentPage = index % 5);
+                      
+                      // Jump to middle when reaching near the end to enable infinite scrolling
+                      if (index >= 950) {
+                        _pageController.jumpToPage(500);
+                      } else if (index <= 50) {
+                        _pageController.jumpToPage(500);
+                      }
+                    },
+                    itemCount: 1000, // Large count for infinite scrolling
+                    itemBuilder: (context, index) {
+                      // Map the infinite index to our 5 slides
+                      final slideIndex = index % 5;
+                      
+                      switch (slideIndex) {
+                        case 0:
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Card(
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  margin: EdgeInsets.zero,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+                                    child: Column(
+                                      children: [
+                                        const Text(
+                                          'Overall User',
+                                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        FutureBuilder<int>(
+                                          future: _fetchUserCount(),
+                                          builder: (context, snapshot) {
+                                            final userCount = snapshot.data ?? 0;
+                                            return Text(
+                                              userCount.toString(),
+                                              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Color(0xFF800000)),
+                                            );
+                                          },
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 12),
-                                    FutureBuilder<int>(
-                                      future: _fetchUserCount(),
-                                      builder: (context, snapshot) {
-                                        final userCount = snapshot.data ?? 0;
-                                        return Text(
-                                          userCount.toString(),
-                                          style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Color(0xFF800000)),
-                                        );
-                                      },
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: FutureBuilder<int>(
+                                        future: _fetchRoleCount('customer'),
+                                        builder: (context, snapshot) {
+                                          final count = snapshot.data ?? 0;
+                                          return Card(
+                                            elevation: 3,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(14),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
+                                              child: Column(
+                                                children: [
+                                                  const Text('Customer', style: TextStyle(fontWeight: FontWeight.w600)),
+                                                  const SizedBox(height: 6),
+                                                  Text(count.toString(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: FutureBuilder<int>(
+                                        future: _fetchRoleCount('restaurant'),
+                                        builder: (context, snapshot) {
+                                          final count = snapshot.data ?? 0;
+                                          return Card(
+                                            elevation: 3,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(14),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
+                                              child: Column(
+                                                children: [
+                                                  const Text('Restaurant', style: TextStyle(fontWeight: FontWeight.w600)),
+                                                  const SizedBox(height: 6),
+                                                  Text(count.toString(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: FutureBuilder<int>(
+                                        future: _fetchRoleCount('rider'),
+                                        builder: (context, snapshot) {
+                                          final count = snapshot.data ?? 0;
+                                          return Card(
+                                            elevation: 3,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(14),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
+                                              child: Column(
+                                                children: [
+                                                  const Text('Rider', style: TextStyle(fontWeight: FontWeight.w600)),
+                                                  const SizedBox(height: 6),
+                                                  Text(count.toString(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ],
                                 ),
-                              ),
+                              ],
                             ),
-                            const SizedBox(height: 12),
-                            Row(
+                          );
+                        case 1:
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Expanded(
-                                  child: FutureBuilder<int>(
-                                    future: _fetchRoleCount('customer'),
-                                    builder: (context, snapshot) {
-                                      final count = snapshot.data ?? 0;
-                                      return Card(
+                                // Left: Overall Food (responsive width)
+                                Flexible(
+                                  flex: 4, // Match slide 5 ratio
+                                  child: Card(
+                                    elevation: 4,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    margin: EdgeInsets.zero,
+                                    child: SizedBox(
+                                      height: 132, // Match slide 5 height
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          children: [
+                                            Column(
+                                              children: [
+                                                const Text('Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                                                const Text('Food', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 12),
+                                            FutureBuilder<int>(
+                                              future: _fetchFoodCount(),
+                                              builder: (context, snapshot) {
+                                                final foodCount = snapshot.data ?? 0;
+                                                return Text(
+                                                  foodCount.toString(),
+                                                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000)),
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                // Right: 3 stacked cards (Best Seller, Favorite, Most Recent)
+                                Flexible(
+                                  flex: 9, // Match slide 5 ratio
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      Card(
+                                        elevation: 3,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                        margin: const EdgeInsets.only(right: 0, left: 0), // Remove right margin
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0), // Remove horizontal padding
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Text('Best Seller', style: TextStyle(fontWeight: FontWeight.w600)),
+                                              const SizedBox(height: 2),
+                                              Text('Example Here..', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      // Consistent gap between right cards
+                                      const SizedBox(height: 12),
+                                      Card(
+                                        elevation: 3,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                        margin: const EdgeInsets.only(right: 0, left: 0), // Remove right margin
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0), // Remove horizontal padding
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Text('Favorite', style: TextStyle(fontWeight: FontWeight.w600)),
+                                              const SizedBox(height: 2),
+                                              Text('Example Here..', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      // Consistent gap between right cards
+                                      const SizedBox(height: 12),
+                                      Card(
+                                        elevation: 3,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                        margin: const EdgeInsets.only(right: 0, left: 0), // Remove right margin
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0), // Remove horizontal padding
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Text('Most Recent', style: TextStyle(fontWeight: FontWeight.w600)),
+                                              const SizedBox(height: 2),
+                                              Text('Example Here..', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        case 2:
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Card(
+                                  elevation: 3,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  margin: const EdgeInsets.symmetric(horizontal: 0),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text('Top Customer', style: TextStyle(fontWeight: FontWeight.w600)),
+                                        const SizedBox(height: 8),
+                                        Text('Example Here..', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Card(
+                                  elevation: 3,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  margin: const EdgeInsets.symmetric(horizontal: 0),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text('VIP Customer', style: TextStyle(fontWeight: FontWeight.w600)),
+                                        const SizedBox(height: 8),
+                                        Text('Example Here..', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Card(
+                                  elevation: 3,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  margin: const EdgeInsets.symmetric(horizontal: 0),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text('Active Customer', style: TextStyle(fontWeight: FontWeight.w600)),
+                                        const SizedBox(height: 8),
+                                        Text('Example Here..', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        case 3:
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Card(
                                         elevation: 3,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(14),
@@ -224,21 +507,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                             children: [
                                               const Text('Customer', style: TextStyle(fontWeight: FontWeight.w600)),
                                               const SizedBox(height: 6),
-                                              Text(count.toString(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
+                                              Text('120', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
                                             ],
                                           ),
                                         ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: FutureBuilder<int>(
-                                    future: _fetchRoleCount('restaurant'),
-                                    builder: (context, snapshot) {
-                                      final count = snapshot.data ?? 0;
-                                      return Card(
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Card(
                                         elevation: 3,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(14),
@@ -247,23 +524,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                           padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
                                           child: Column(
                                             children: [
-                                              const Text('Restaurant', style: TextStyle(fontWeight: FontWeight.w600)),
+                                              const Text('Serving', style: TextStyle(fontWeight: FontWeight.w600)),
                                               const SizedBox(height: 6),
-                                              Text(count.toString(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Text('15', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
+                                                  const SizedBox(width: 4),
+                                                  Icon(Icons.access_time, color: Colors.grey, size: 22),
+                                                ],
+                                              ),
                                             ],
                                           ),
                                         ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: FutureBuilder<int>(
-                                    future: _fetchRoleCount('rider'),
-                                    builder: (context, snapshot) {
-                                      final count = snapshot.data ?? 0;
-                                      return Card(
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Card(
                                         elevation: 3,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(14),
@@ -272,323 +550,170 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                           padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
                                           child: Column(
                                             children: [
-                                              const Text('Rider', style: TextStyle(fontWeight: FontWeight.w600)),
+                                              const Text('Top Rated', style: TextStyle(fontWeight: FontWeight.w600)),
                                               const SizedBox(height: 6),
-                                              Text(count.toString(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Text('5', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
+                                                  const SizedBox(width: 4),
+                                                  Icon(Icons.star, color: Colors.amber, size: 22),
+                                                ],
+                                              ),
                                             ],
                                           ),
                                         ),
-                                      );
-                                    },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Card(
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  margin: EdgeInsets.zero,
+                                  child: SizedBox(
+                                    height: 130,
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          const Text(
+                                            'Top Restaurant',
+                                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Text('Restaurant 1', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-                      // Second Page: Left card with fixed width, right cards fill remaining space
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Left: Overall Food (responsive width)
-                            Flexible(
-                              flex: 4, // Lower flex so it takes less space than right
-                              child: Card(
-                                elevation: 4,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                margin: EdgeInsets.zero,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+                          );
+                        case 4:
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Flexible(
+                                  flex: 9,
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
-                                      Column(
-                                        children: [
-                                          const Text('Overall', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                                          const Text('Food', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                                        ],
+                                      Card(
+                                        elevation: 3,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                        margin: const EdgeInsets.only(right: 0, left: 0),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Text('Top Rider', style: TextStyle(fontWeight: FontWeight.w600)),
+                                              const SizedBox(height: 2),
+                                              Text('Rider 1', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                            ],
+                                          ),
+                                        ),
                                       ),
-                                      const SizedBox(height: 16),
-                                      FutureBuilder<int>(
-                                        future: _fetchFoodCount(),
-                                        builder: (context, snapshot) {
-                                          final foodCount = snapshot.data ?? 0;
-                                          return Text(
-                                            foodCount.toString(),
-                                            style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Color(0xFF800000)),
-                                          );
-                                        },
+                                      const SizedBox(height: 12),
+                                      Card(
+                                        elevation: 3,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                        margin: const EdgeInsets.only(right: 0, left: 0),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Text('On-Time Delivery', style: TextStyle(fontWeight: FontWeight.w600)),
+                                              const SizedBox(height: 2),
+                                              Text('estimate 15-20 min', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Card(
+                                        elevation: 3,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                        margin: const EdgeInsets.only(right: 0, left: 0),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Text('Best Rated', style: TextStyle(fontWeight: FontWeight.w600)),
+                                              const SizedBox(height: 2),
+                                              Text('"Reliable Rider"', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ),
-                            ),
-                            // Add a gap between left and right cards
-                            const SizedBox(width: 16),
-                            // Right: 3 stacked cards (Best Seller, Favorite, Most Recent)
-                            Flexible(
-                              flex: 8, // Higher flex so it expands more
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Card(
-                                    elevation: 3,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    margin: const EdgeInsets.only(right: 0, left: 0), // Remove right margin
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0), // Remove horizontal padding
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          Text('Best Seller', style: TextStyle(fontWeight: FontWeight.w600)),
-                                          const SizedBox(height: 2),
-                                          Text('Example Here..', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  // Consistent gap between right cards
-                                  const SizedBox(height: 16),
-                                  Card(
-                                    elevation: 3,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    margin: const EdgeInsets.only(right: 0, left: 0), // Remove right margin
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0), // Remove horizontal padding
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          Text('Favorite', style: TextStyle(fontWeight: FontWeight.w600)),
-                                          const SizedBox(height: 2),
-                                          Text('Example Here..', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  // Consistent gap between right cards
-                                  const SizedBox(height: 16),
-                                  Card(
-                                    elevation: 3,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    margin: const EdgeInsets.only(right: 0, left: 0), // Remove right margin
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0), // Remove horizontal padding
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          Text('Most Recent', style: TextStyle(fontWeight: FontWeight.w600)),
-                                          const SizedBox(height: 2),
-                                          Text('Example Here..', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Third Page: 3 vertically stacked cards (Top Customer, VIP Customer, Active Customer)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Top Customer
-                            Card(
-                              elevation: 3,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              margin: const EdgeInsets.symmetric(horizontal: 0),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0), // Match slide 2 right cards
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text('Top Customer', style: TextStyle(fontWeight: FontWeight.w600)),
-                                    const SizedBox(height: 2),
-                                    Text('Example Here..', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            // VIP Customer
-                            Card(
-                              elevation: 3,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              margin: const EdgeInsets.symmetric(horizontal: 0),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0), // Match slide 2 right cards
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text('VIP Customer', style: TextStyle(fontWeight: FontWeight.w600)),
-                                    const SizedBox(height: 2),
-                                    Text('Example Here..', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            // Active Customer
-                            Card(
-                              elevation: 3,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              margin: const EdgeInsets.symmetric(horizontal: 0),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 0), // Match slide 2 right cards
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text('Active Customer', style: TextStyle(fontWeight: FontWeight.w600)),
-                                    const SizedBox(height: 2),
-                                    Text('Example Here..', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Fourth Page: Reversed Slide 1 (3 cards on top, 1 card at bottom)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Row of 3 cards (Customer, Preparation, Top Rated) on top
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Card(
-                                    elevation: 3,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
-                                      child: Column(
-                                        children: [
-                                          const Text('Customer', style: TextStyle(fontWeight: FontWeight.w600)),
-                                          const SizedBox(height: 6),
-                                          Text('120', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000))), // Placeholder number
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
                                 const SizedBox(width: 12),
-                                Expanded(
+                                Flexible(
+                                  flex: 4,
                                   child: Card(
-                                    elevation: 3,
+                                    elevation: 4,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
+                                      borderRadius: BorderRadius.circular(16),
                                     ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
-                                      child: Column(
-                                        children: [
-                                          const Text('Preparation', style: TextStyle(fontWeight: FontWeight.w600)),
-                                          const SizedBox(height: 6),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Text('15', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
-                                              const SizedBox(width: 4),
-                                              Icon(Icons.access_time, color: Colors.grey, size: 22), // Simple time icon
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Card(
-                                    elevation: 3,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
-                                      child: Column(
-                                        children: [
-                                          const Text('Top Rated', style: TextStyle(fontWeight: FontWeight.w600)),
-                                          const SizedBox(height: 6),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Text('5', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
-                                              const SizedBox(width: 4),
-                                              Icon(Icons.star, color: Colors.amber, size: 22),
-                                            ],
-                                          ),
-                                        ],
+                                    margin: EdgeInsets.zero,
+                                    child: SizedBox(
+                                      height: 132,
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          children: [
+                                            Column(
+                                              children: [
+                                                const Text('Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                                                const Text('Food', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                                                const Text('Delivery', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Text('0', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            // Single large card at the bottom (Top Restaurant)
-                            Card(
-                              elevation: 4,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              margin: EdgeInsets.zero,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-                                child: Column(
-                                  children: [
-                                    const Text(
-                                      'Top Restaurant',
-                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text('Restaurant 1', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                          );
+                        default:
+                          return Container();
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(height: 10),
                 // Page indicator dots
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(4, (index) => Container(
+                  children: List.generate(5, (index) => Container(
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     width: 10,
                     height: 10,
