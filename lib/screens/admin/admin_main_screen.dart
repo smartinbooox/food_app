@@ -313,81 +313,94 @@ class _ManageScreenState extends State<_ManageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Wrap the Scaffold in a ScaffoldMessenger with the key
+    // Add missing closing parenthesis at the end of the build method
     return ScaffoldMessenger(
       key: _scaffoldMessengerKey,
       child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Manage Foods'),
+          backgroundColor: AppConstants.primaryColor,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
         body: _isLoadingFoods
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
                 onRefresh: () async => _fetchFoods(),
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                       children: [
-                        const Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                        // Add Food button (top right)
-                        ElevatedButton.icon(
-                          onPressed: () async {
-                            final result = await _showAddOrEditFoodDialog();
-                            if (result == true && mounted) {
-                              // Show SnackBar using the ScaffoldMessenger key
-                              _scaffoldMessengerKey.currentState?.showSnackBar(
-                                const SnackBar(
-                                  content: Text('Food added successfully!'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                            }
-                          },
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add Food'),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                          ],
                         ),
+                        const SizedBox(height: 16),
+                        ..._foods.map((food) => Card(
+                              child: ListTile(
+                                leading: food['image_url'] != null
+                                    ? Image.network(food['image_url'], width: 50, height: 50, fit: BoxFit.cover)
+                                    : const Icon(Icons.fastfood, size: 40),
+                                title: Text(food['name'] ?? ''),
+                                subtitle: Text('SAR  ${food['price']?.toStringAsFixed(2) ?? ''}\n${food['description'] ?? ''}'),
+                                isThreeLine: true,
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, color: Colors.blue),
+                                      onPressed: () async {
+                                        final result = await _showAddOrEditFoodDialog(food: food);
+                                        if (result == true && mounted) {
+                                          _scaffoldMessengerKey.currentState?.showSnackBar(
+                                            SnackBar(
+                                              content: Text('"${food['name']}" updated successfully!'),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, color: Colors.red),
+                                      onPressed: () => _deleteFood(food['id']),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )),
+                        if (_foods.isEmpty)
+                          const Center(child: Text('No foods found. Add your first food!')),
                       ],
-                    ),
-                    const SizedBox(height: 16),
-                    ..._foods.map((food) => Card(
-                          child: ListTile(
-                            leading: food['image_url'] != null
-                                ? Image.network(food['image_url'], width: 50, height: 50, fit: BoxFit.cover)
-                                : const Icon(Icons.fastfood, size: 40),
-                            title: Text(food['name'] ?? ''),
-                            subtitle: Text('SAR  ${food['price']?.toStringAsFixed(2) ?? ''}\n${food['description'] ?? ''}'),
-                            isThreeLine: true,
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.blue),
-                                  onPressed: () async {
-                                    final result = await _showAddOrEditFoodDialog(food: food);
-                                    if (result == true && mounted) {
-                                      _scaffoldMessengerKey.currentState?.showSnackBar(
-                                        SnackBar(
-                                          content: Text('"${food['name']}" updated successfully!'),
-                                          backgroundColor: Colors.green,
-                                        ),
-                                      );
-                                    }
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => _deleteFood(food['id']),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )),
-                    if (_foods.isEmpty)
-                      const Center(child: Text('No foods found. Add your first food!')),
-                  ],
+                    );
+                  },
                 ),
               ),
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.only(bottom: 86.0), // Move FAB above the bottom nav
+          child: FloatingActionButton(
+            onPressed: () async {
+              final result = await _showAddOrEditFoodDialog();
+              if (result == true && mounted) {
+                _scaffoldMessengerKey.currentState?.showSnackBar(
+                  const SnackBar(
+                    content: Text('Food added successfully!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            backgroundColor: AppConstants.primaryColor,
+            child: const Icon(Icons.add, color: Colors.white),
+            tooltip: 'Add Food',
+          ),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       ),
-    );
+    ); // <-- This closes the ScaffoldMessenger
   }
 }
 
@@ -404,7 +417,9 @@ class _ReportScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: const Center(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
+        child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -424,6 +439,7 @@ class _ReportScreen extends StatelessWidget {
               style: TextStyle(color: Colors.grey),
             ),
           ],
+          ),
         ),
       ),
     );
@@ -552,224 +568,222 @@ class _SettingsScreenState extends State<_SettingsScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Admin Settings',
-                style: AppConstants.headingStyle,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Admin Settings',
+              style: AppConstants.headingStyle,
+            ),
+            const SizedBox(height: 24),
+            // Add User Form
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              const SizedBox(height: 24),
-              // Add User Form
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Colored header with icon
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppConstants.primaryColor,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
-                        ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Colored header with icon
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppConstants.primaryColor,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
                       ),
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                      child: Row(
+                    ),
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person_add, color: Colors.white),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Add User (Rider/Restaurant)',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.person_add, color: Colors.white),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Add User (Rider/Restaurant)',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: InputDecoration(
+                              labelText: 'Name',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                              ),
+                              prefixIcon: const Icon(Icons.person),
+                            ),
+                            validator: (value) => value == null || value.isEmpty ? 'Enter name' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _emailController,
+                            decoration: InputDecoration(
+                              labelText: 'Email',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                              ),
+                              prefixIcon: const Icon(Icons.email),
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) return 'Enter email';
+                              final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                              if (!emailRegex.hasMatch(value)) return 'Enter valid email';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _passwordController,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                              ),
+                              prefixIcon: const Icon(Icons.lock),
+                            ),
+                            obscureText: true,
+                            validator: (value) => value == null || value.isEmpty ? 'Enter password' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _contactController,
+                            decoration: InputDecoration(
+                              labelText: 'Contact',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                              ),
+                              prefixIcon: const Icon(Icons.phone),
+                            ),
+                            validator: (value) => value == null || value.isEmpty ? 'Enter contact' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<String>(
+                            value: _selectedRole,
+                            items: const [
+                              DropdownMenuItem(value: 'rider', child: Text('Rider')),
+                              DropdownMenuItem(value: 'restaurant', child: Text('Restaurant')),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) setState(() { _selectedRole = value; });
+                            },
+                            decoration: InputDecoration(
+                              labelText: 'Role',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                              ),
+                              prefixIcon: const Icon(Icons.group),
+                            ),
+                            dropdownColor: Colors.white,
+                          ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _isLoading ? null : _addUser,
+                              style: AppConstants.primaryButton,
+                              icon: _isLoading
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                  : const Icon(Icons.person_add, color: Colors.white),
+                              label: Text(
+                                _isLoading ? 'Adding...' : 'Add User',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _nameController,
-                              decoration: InputDecoration(
-                                labelText: 'Name',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                                ),
-                                prefixIcon: const Icon(Icons.person),
-                              ),
-                              validator: (value) => value == null || value.isEmpty ? 'Enter name' : null,
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _emailController,
-                              decoration: InputDecoration(
-                                labelText: 'Email',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                                ),
-                                prefixIcon: const Icon(Icons.email),
-                              ),
-                              keyboardType: TextInputType.emailAddress,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) return 'Enter email';
-                                final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-                                if (!emailRegex.hasMatch(value)) return 'Enter valid email';
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _passwordController,
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                                ),
-                                prefixIcon: const Icon(Icons.lock),
-                              ),
-                              obscureText: true,
-                              validator: (value) => value == null || value.isEmpty ? 'Enter password' : null,
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _contactController,
-                              decoration: InputDecoration(
-                                labelText: 'Contact',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                                ),
-                                prefixIcon: const Icon(Icons.phone),
-                              ),
-                              validator: (value) => value == null || value.isEmpty ? 'Enter contact' : null,
-                            ),
-                            const SizedBox(height: 16),
-                            DropdownButtonFormField<String>(
-                              value: _selectedRole,
-                              items: const [
-                                DropdownMenuItem(value: 'rider', child: Text('Rider')),
-                                DropdownMenuItem(value: 'restaurant', child: Text('Restaurant')),
-                              ],
-                              onChanged: (value) {
-                                if (value != null) setState(() { _selectedRole = value; });
-                              },
-                              decoration: InputDecoration(
-                                labelText: 'Role',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                                ),
-                                prefixIcon: const Icon(Icons.group),
-                              ),
-                              dropdownColor: Colors.white,
-                            ),
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: _isLoading ? null : _addUser,
-                                style: AppConstants.primaryButton,
-                                icon: _isLoading
-                                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                    : const Icon(Icons.person_add, color: Colors.white),
-                                label: Text(
-                                  _isLoading ? 'Adding...' : 'Add User',
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            // Settings Card
+            Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.admin_panel_settings, color: AppConstants.primaryColor),
+                    title: Text('Admin Panel', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Manage system settings'),
+                    trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              Icon(Icons.info, color: Colors.white),
+                              const SizedBox(width: 8),
+                              Text('Admin Panel coming soon!'),
+                            ],
+                          ),
+                          backgroundColor: AppConstants.primaryColor,
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-              // Settings Card
-              Card(
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: Icon(Icons.admin_panel_settings, color: AppConstants.primaryColor),
-                      title: Text('Admin Panel', style: TextStyle(fontWeight: FontWeight.w600)),
-                      subtitle: Text('Manage system settings'),
-                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                Icon(Icons.info, color: Colors.white),
-                                const SizedBox(width: 8),
-                                Text('Admin Panel coming soon!'),
-                              ],
-                            ),
-                            backgroundColor: AppConstants.primaryColor,
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: Icon(Icons.security, color: AppConstants.primaryColor),
+                    title: Text('Security', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Manage security settings'),
+                    trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              Icon(Icons.info, color: Colors.white),
+                              const SizedBox(width: 8),
+                              Text('Security settings coming soon!'),
+                            ],
                           ),
-                        );
-                      },
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: Icon(Icons.security, color: AppConstants.primaryColor),
-                      title: Text('Security', style: TextStyle(fontWeight: FontWeight.w600)),
-                      subtitle: Text('Manage security settings'),
-                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                Icon(Icons.info, color: Colors.white),
-                                const SizedBox(width: 8),
-                                Text('Security settings coming soon!'),
-                              ],
-                            ),
-                            backgroundColor: AppConstants.primaryColor,
-                          ),
-                        );
-                      },
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: Icon(Icons.logout, color: Colors.red),
-                      title: Text('Logout', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
-                      subtitle: Text('Sign out of admin account'),
-                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.red),
-                      onTap: () => _showLogoutConfirmation(context),
-                    ),
-                  ],
-                ),
+                          backgroundColor: AppConstants.primaryColor,
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: Icon(Icons.logout, color: Colors.red),
+                    title: Text('Logout', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+                    subtitle: Text('Sign out of admin account'),
+                    trailing: const Icon(Icons.arrow_forward_ios, color: Colors.red),
+                    onTap: () => _showLogoutConfirmation(context),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -790,56 +804,72 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(25),
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
-            selectedItemColor: AppConstants.primaryColor,
-            unselectedItemColor: Colors.grey,
-            selectedLabelStyle: const TextStyle(fontSize: 0),
-            unselectedLabelStyle: const TextStyle(fontSize: 0),
-            elevation: 0,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.assessment),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.assignment), // Clipboard icon for Manage
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.settings),
-                label: '',
-              ),
-            ],
+      body: Stack(
+        children: [
+          // Main content (all screens)
+          Positioned.fill(
+            child: _screens[_currentIndex],
           ),
-        ),
+          // Floating bottom navigation bar
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              minimum: const EdgeInsets.all(8),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(25),
+                  child: BottomNavigationBar(
+                    currentIndex: _currentIndex,
+                    onTap: (index) {
+                      setState(() {
+                        _currentIndex = index;
+                      });
+                    },
+                    type: BottomNavigationBarType.fixed,
+                    backgroundColor: Colors.white,
+                    selectedItemColor: AppConstants.primaryColor,
+                    unselectedItemColor: Colors.grey,
+                    selectedLabelStyle: const TextStyle(fontSize: 0),
+                    unselectedLabelStyle: const TextStyle(fontSize: 0),
+                    elevation: 0,
+                    items: const [
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.home),
+                        label: '',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.assessment),
+                        label: '',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.assignment), // Clipboard icon for Manage
+                        label: '',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.settings),
+                        label: '',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
