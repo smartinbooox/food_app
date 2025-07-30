@@ -9,6 +9,8 @@ import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import '../restaurant/restaurant_dashboard_screen.dart';
 import '../rider/rider_dashboard_screen.dart';
+import '../rider/rider_profile_setup_screen.dart';
+import '../../services/rider_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final String? initialEmail;
@@ -89,7 +91,16 @@ class _LoginScreenState extends State<LoginScreen> {
         if (userData['password'] == hashedPassword) {
           Widget nextScreen;
           if (role == 'rider') {
-            nextScreen = const RiderDashboardScreen();
+            // Check if rider has a profile
+            final riderService = RiderService();
+            riderService.setCurrentUserId(userData['id']); // Set the user ID
+            final riderProfile = await riderService.getRiderProfile();
+            if (riderProfile != null) {
+              nextScreen = const RiderDashboardScreen();
+            } else {
+              // Send to profile setup screen
+              nextScreen = RiderProfileSetupScreen(userId: userData['id']);
+            }
           } else if (role == 'restaurant') {
             nextScreen = const RestaurantDashboardScreen();
           } else {

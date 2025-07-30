@@ -21,6 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _contactController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  String _selectedRole = 'customer'; // Add role selection
 
   @override
   void dispose() {
@@ -47,15 +48,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final password = _passwordController.text;
       final hashedPassword = sha256.convert(utf8.encode(password)).toString();
       final uuid = Uuid();
-      final customerId = uuid.v4();
-      // Insert customer directly into users table
+      final userId = uuid.v4();
+      // Insert user directly into users table
       await Supabase.instance.client.from('users').insert({
-        'id': customerId,
+        'id': userId,
         'email': email,
         'password': hashedPassword,
         'name': name,
         'contact': contact,
-        'role': 'customer',
+        'role': _selectedRole, // Use selected role
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Registration successful!')),
@@ -200,6 +201,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 return null;
                               },
                             ),
+                            
+                            // Role Selection
+                            const SizedBox(height: AppConstants.paddingMedium),
+                            const Text(
+                              'Register as:',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: RadioListTile<String>(
+                                    title: const Text('Customer'),
+                                    value: 'customer',
+                                    groupValue: _selectedRole,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _selectedRole = value!;
+                                      });
+                                    },
+                                    activeColor: AppConstants.primaryColor,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: RadioListTile<String>(
+                                    title: const Text('Rider'),
+                                    value: 'rider',
+                                    groupValue: _selectedRole,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _selectedRole = value!;
+                                      });
+                                    },
+                                    activeColor: AppConstants.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
                             const SizedBox(height: AppConstants.paddingLarge),
                             SizedBox(
                               width: double.infinity,
