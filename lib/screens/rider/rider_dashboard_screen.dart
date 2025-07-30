@@ -103,12 +103,17 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
     try {
       final orders = await _riderService.getAvailableOrders();
       if (mounted) {
-        Navigator.push(
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => AvailableOrdersScreen(orders: orders),
           ),
         );
+        
+        // Refresh dashboard data when returning from available orders
+        if (result == true) {
+          _loadDashboardData();
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -527,7 +532,7 @@ class _AvailableOrdersScreenState extends State<AvailableOrdersScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Order accepted successfully!'), backgroundColor: Colors.green),
           );
-          Navigator.pop(context);
+          Navigator.pop(context, true); // Return true to indicate order was accepted
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to accept order'), backgroundColor: Colors.red),

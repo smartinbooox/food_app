@@ -213,32 +213,22 @@ class RiderService {
   // Get available orders
   Future<List<Map<String, dynamic>>> getAvailableOrders() async {
     try {
+      print('Fetching available orders...');
+      
       final response = await _supabase
           .from('orders')
-          .select('''
-            *,
-            customers:users!orders_customer_id_fkey(
-              id,
-              name,
-              phone
-            ),
-            merchants:users!orders_merchant_id_fkey(
-              id,
-              name,
-              address
-            ),
-            order_items(
-              *,
-              foods(*)
-            )
-          ''')
+          .select('*')
           .eq('status', 'ready')
           .filter('rider_id', 'is', null)
           .order('created_at', ascending: true);
 
+      print('Available orders response: $response');
+      print('Number of available orders: ${response.length}');
+      
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       print('Error fetching available orders: $e');
+      print('Error details: ${e.toString()}');
       return [];
     }
   }
