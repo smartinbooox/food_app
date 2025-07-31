@@ -34,6 +34,7 @@ class _ManageScreenState extends State<_ManageScreen> {
   bool _isUploading = false;
 
   List<Map<String, dynamic>> _foods = [];
+  List<Map<String, dynamic>> _filteredFoods = [];
   bool _isLoadingFoods = false;
   String? _userId;
 
@@ -61,9 +62,56 @@ class _ManageScreenState extends State<_ManageScreen> {
         .select()
         .eq('created_by', _userId!)
         .order('created_at', ascending: false);
+    final foods = List<Map<String, dynamic>>.from(response as List);
     setState(() {
-      _foods = List<Map<String, dynamic>>.from(response as List);
+      _foods = foods;
+      _applySearchAndSort();
       _isLoadingFoods = false;
+    });
+  }
+
+  void _applySearchAndSort() {
+    String query = _searchController.text.trim().toLowerCase();
+    List<Map<String, dynamic>> filtered = _foods;
+
+    // Search filter
+    if (query.isNotEmpty) {
+      filtered = filtered.where((food) {
+        final name = (food['name'] ?? '').toString().toLowerCase();
+        final desc = (food['description'] ?? '').toString().toLowerCase();
+        return name.contains(query) || desc.contains(query);
+      }).toList();
+    }
+
+    // Sorting/filtering
+    switch (_selectedSort) {
+      case 'Best Seller':
+        // Assuming 'sales' field exists for best sellers
+        filtered.sort((a, b) => ((b['sales'] ?? 0) as int).compareTo((a['sales'] ?? 0) as int));
+        break;
+      case 'Recent':
+        filtered.sort((a, b) {
+          final aDate = DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(2000);
+          final bDate = DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(2000);
+          return bDate.compareTo(aDate);
+        });
+        break;
+      case 'Favorites':
+        // Assuming 'is_favorite' field exists
+        filtered = filtered.where((food) => food['is_favorite'] == true).toList();
+        break;
+      case 'Categories':
+        // For demo, just sort by 'category' if exists
+        filtered.sort((a, b) => ((a['category'] ?? '') as String).compareTo((b['category'] ?? '') as String));
+        break;
+      case 'All':
+      default:
+        // No additional filtering
+        break;
+    }
+
+    setState(() {
+      _filteredFoods = filtered;
     });
   }
 
@@ -311,9 +359,16 @@ class _ManageScreenState extends State<_ManageScreen> {
     super.dispose();
   }
 
+  // Search and filter state
+  final TextEditingController _searchController = TextEditingController();
+  String _selectedSort = 'All';
+  final List<String> _sortOptions = ['All', 'Best Seller', 'Recent', 'Popular', 'Categories'];
+
   @override
   Widget build(BuildContext context) {
-    // Add missing closing parenthesis at the end of the build method
+    final List<String> categories = [
+      'All', 'Main Course', 'Beverages', 'Seafood', 'BBQ & Grilled', 'Pastries', 'Desserts', 'Snacks', 'Etc.'
+    ];
     return ScaffoldMessenger(
       key: _scaffoldMessengerKey,
       child: Scaffold(
@@ -329,51 +384,242 @@ class _ManageScreenState extends State<_ManageScreen> {
                 onRefresh: () async => _fetchFoods(),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    return ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    return Column(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        // --- Search & Filter Container ---
+                        Column(
                           children: [
-                            const Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        ..._foods.map((food) => Card(
-                              child: ListTile(
-                                leading: food['image_url'] != null
-                                    ? Image.network(food['image_url'], width: 50, height: 50, fit: BoxFit.cover)
-                                    : const Icon(Icons.fastfood, size: 40),
-                                title: Text(food['name'] ?? ''),
-                                subtitle: Text('SAR  ${food['price']?.toStringAsFixed(2) ?? ''}\n${food['description'] ?? ''}'),
-                                isThreeLine: true,
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                            Container(
+                              decoration: BoxDecoration(
+                                color: AppConstants.primaryColor,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(0),
+                                  topRight: Radius.circular(0),
+                                  bottomLeft: Radius.circular(32),
+                                  bottomRight: Radius.circular(32),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.10),
+                                    blurRadius: 24,
+                                    spreadRadius: 0,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(16, 16, 16, 22),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit, color: Colors.blue),
-                                      onPressed: () async {
-                                        final result = await _showAddOrEditFoodDialog(food: food);
-                                        if (result == true && mounted) {
-                                          _scaffoldMessengerKey.currentState?.showSnackBar(
-                                            SnackBar(
-                                              content: Text('"${food['name']}" updated successfully!'),
-                                              backgroundColor: Colors.green,
+                                    // Search bar with button inside
+                                    Expanded(
+                                      flex: 3,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: TextField(
+                                                controller: _searchController,
+                                                decoration: InputDecoration(
+                                                  hintText: 'Search food...',
+                                                  border: InputBorder.none,
+                                                  isCollapsed: false,
+                                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                                                  prefixIcon: const Icon(Icons.search, color: AppConstants.primaryColor),
+                                                ),
+                                                textAlignVertical: TextAlignVertical.center,
+                                                onSubmitted: (value) {
+                                                  _applySearchAndSort();
+                                                },
+                                              ),
                                             ),
-                                          );
-                                        }
-                                      },
+                                            // Search button with inner border
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: AppConstants.primaryColor,
+                                                borderRadius: const BorderRadius.only(
+                                                  topRight: Radius.circular(12),
+                                                  bottomRight: Radius.circular(12),
+                                                ),
+                                                border: Border.all(
+                                                  color: Colors.white,
+                                                  width: 2,
+                                                ),
+                                              ),
+                                              child: Material(
+                                                color: Colors.transparent,
+                                                borderRadius: const BorderRadius.only(
+                                                  topRight: Radius.circular(12),
+                                                  bottomRight: Radius.circular(12),
+                                                ),
+                                                child: InkWell(
+                                                  borderRadius: const BorderRadius.only(
+                                                    topRight: Radius.circular(12),
+                                                    bottomRight: Radius.circular(12),
+                                                  ),
+                                                  onTap: _applySearchAndSort,
+                                                  child: Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                                    child: const Icon(Icons.arrow_forward, color: Colors.white),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () => _deleteFood(food['id']),
+                                    const SizedBox(width: 12),
+                                    // Sort filter as button with dropdown inside
+                                    Expanded(
+                                      flex: 2,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: AppConstants.primaryColor.withOpacity(0.2)),
+                                        ),
+                                        child: DropdownButtonHideUnderline(
+                                          child: ButtonTheme(
+                                            alignedDropdown: true,
+                                            child: DropdownButton<String>(
+                                              value: _selectedSort,
+                                              isExpanded: true,
+                                              icon: const Icon(Icons.arrow_drop_down, color: AppConstants.primaryColor),
+                                              style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600),
+                                              dropdownColor: Colors.white,
+                                              borderRadius: BorderRadius.circular(12),
+                                              items: _sortOptions.map((option) {
+                                                return DropdownMenuItem<String>(
+                                                  value: option,
+                                                  child: Text(option, style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600)),
+                                                );
+                                              }).toList(),
+                                              onChanged: (value) {
+                                                if (value != null) {
+                                                  setState(() {
+                                                    _selectedSort = value;
+                                                  });
+                                                  _applySearchAndSort();
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
-                            )),
-                        if (_foods.isEmpty)
-                          const Center(child: Text('No foods found. Add your first food!')),
+                            ),
+                            const SizedBox(height: 4), // 8px gap below the container
+                          ],
+                        ),
+                        // --- Food List and Title ---
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                            children: [
+                              // --- Category Horizontal Scroll ---
+                              const SizedBox(height: 8), // 2 spaces margin above
+                              SizedBox(
+                                height: 48,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.symmetric(horizontal: 0),
+                                  itemCount: categories.length,
+                                  separatorBuilder: (context, idx) => const SizedBox(width: 8),
+                                  itemBuilder: (context, idx) {
+                                    final cat = categories[idx];
+                                    final bool isSelected = cat == 'All';
+                                    return Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(24),
+                                        onTap: () {
+                                          // TODO: Implement category filter logic
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                          decoration: BoxDecoration(
+                                            color: isSelected ? AppConstants.primaryColor : Colors.white,
+                                            borderRadius: BorderRadius.circular(24),
+                                            border: Border.all(color: AppConstants.primaryColor.withOpacity(0.15)),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(0.04),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              cat,
+                                              style: TextStyle(
+                                                color: isSelected ? Colors.white : AppConstants.primaryColor,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              ..._filteredFoods.map((food) => Card(
+                                    child: ListTile(
+                                      leading: food['image_url'] != null
+                                          ? Image.network(food['image_url'], width: 50, height: 50, fit: BoxFit.cover)
+                                          : const Icon(Icons.fastfood, size: 40),
+                                      title: Text(food['name'] ?? ''),
+                                      subtitle: Text('SAR  ${food['price']?.toStringAsFixed(2) ?? ''}\n${food['description'] ?? ''}'),
+                                      isThreeLine: true,
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, color: Colors.blue),
+                                            onPressed: () async {
+                                              final result = await _showAddOrEditFoodDialog(food: food);
+                                              if (result == true && mounted) {
+                                                _scaffoldMessengerKey.currentState?.showSnackBar(
+                                                  SnackBar(
+                                                    content: Text('"${food['name']}" updated successfully!'),
+                                                    backgroundColor: Colors.green,
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            onPressed: () => _deleteFood(food['id']),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )),
+                              if (_filteredFoods.isEmpty)
+                                const Center(child: Text('No foods found. Add your first food!')),
+                            ],
+                          ),
+                        ),
                       ],
                     );
                   },
@@ -400,7 +646,7 @@ class _ManageScreenState extends State<_ManageScreen> {
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       ),
-    ); // <-- This closes the ScaffoldMessenger
+    );
   }
 }
 
