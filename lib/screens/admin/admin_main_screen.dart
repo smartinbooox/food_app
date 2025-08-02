@@ -35,13 +35,17 @@ class _ManageScreenState extends State<_ManageScreen> {
 
   List<Map<String, dynamic>> _foods = [];
   List<Map<String, dynamic>> _filteredFoods = [];
+  List<Map<String, dynamic>> _categories = [];
   bool _isLoadingFoods = false;
+  bool _isLoadingCategories = false;
   String? _userId;
+  String _selectedCategoryId = 'all';
 
   @override
   void initState() {
     super.initState();
     _fetchCurrentUserId();
+    _fetchCategories();
   }
 
   Future<void> _fetchCurrentUserId() async {
@@ -52,6 +56,18 @@ class _ManageScreenState extends State<_ManageScreen> {
       });
       _fetchFoods();
     }
+  }
+
+  Future<void> _fetchCategories() async {
+    setState(() => _isLoadingCategories = true);
+    final response = await Supabase.instance.client
+        .from('categories')
+        .select();
+    final categories = List<Map<String, dynamic>>.from(response as List);
+    setState(() {
+      _categories = categories;
+      _isLoadingCategories = false;
+    });
   }
 
   Future<void> _fetchFoods() async {
@@ -74,41 +90,64 @@ class _ManageScreenState extends State<_ManageScreen> {
     String query = _searchController.text.trim().toLowerCase();
     List<Map<String, dynamic>> filtered = _foods;
 
-    // Search filter
     if (query.isNotEmpty) {
-      filtered = filtered.where((food) {
+      // Score foods based on relevance
+      filtered = filtered.map((food) {
         final name = (food['name'] ?? '').toString().toLowerCase();
         final desc = (food['description'] ?? '').toString().toLowerCase();
-        return name.contains(query) || desc.contains(query);
+        int score = 0;
+        if (name.startsWith(query)) {
+          score += 100;
+        } else if (name.contains(query)) {
+          score += 50;
+        }
+        if (desc.contains(query)) {
+          score += 20;
+        }
+        // Optionally, boost by sales/popularity
+        score += (food['sales'] ?? 0) as int;
+        return {...food, '_searchScore': score};
       }).toList();
+      // Only keep foods with score > 0
+      filtered = filtered.where((food) => food['_searchScore'] > 0).toList();
+      // Sort by score descending
+      filtered.sort((a, b) => (b['_searchScore'] as int).compareTo(a['_searchScore'] as int));
+    }
+
+    // Category filter
+    if (_selectedCategoryId != 'all') {
+      filtered = filtered.where((food) => food['category_id'] == _selectedCategoryId).toList();
     }
 
     // Sorting/filtering
     switch (_selectedSort) {
       case 'Best Seller':
-        // Assuming 'sales' field exists for best sellers
         filtered.sort((a, b) => ((b['sales'] ?? 0) as int).compareTo((a['sales'] ?? 0) as int));
         break;
       case 'Recent':
         filtered.sort((a, b) {
-          final aDate = DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(2000);
-          final bDate = DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(2000);
-          return bDate.compareTo(aDate);
+          final aDate = DateTime.tryParse(a['created_at']?.toString() ?? '') ?? DateTime(2000);
+          final bDate = DateTime.tryParse(b['created_at']?.toString() ?? '') ?? DateTime(2000);
+          return bDate.compareTo(aDate); // Newest first
         });
         break;
       case 'Favorites':
-        // Assuming 'is_favorite' field exists
         filtered = filtered.where((food) => food['is_favorite'] == true).toList();
         break;
       case 'Categories':
-        // For demo, just sort by 'category' if exists
-        filtered.sort((a, b) => ((a['category'] ?? '') as String).compareTo((b['category'] ?? '') as String));
+        filtered.sort((a, b) => ((a['category_id'] ?? '') as String).compareTo((b['category_id'] ?? '') as String));
         break;
       case 'All':
       default:
-        // No additional filtering
         break;
     }
+
+    // Remove _searchScore before displaying
+    filtered = filtered.map((food) {
+      final copy = Map<String, dynamic>.from(food);
+      copy.remove('_searchScore');
+      return copy;
+    }).toList();
 
     setState(() {
       _filteredFoods = filtered;
@@ -139,143 +178,270 @@ class _ManageScreenState extends State<_ManageScreen> {
     _descController.text = food?['description'] ?? '';
     _priceController.text = food?['price']?.toString() ?? '';
     _pickedImage = null;
+    String selectedCategoryId = food?['category_id'] ?? (_categories.isNotEmpty ? _categories.first['id'] : '');
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
-            return AlertDialog(
-              title: Text(isEdit ? 'Edit Food' : 'Add Food'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Name'),
-                    ),
-                    TextField(
-                      controller: _descController,
-                      decoration: const InputDecoration(labelText: 'Description'),
-                    ),
-                    TextField(
-                      controller: _priceController,
-                      decoration: const InputDecoration(labelText: 'Price'),
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    ),
-                    const SizedBox(height: 12),
-                    GestureDetector(
-                      onTap: () async {
-                        final ImagePicker picker = ImagePicker();
-                        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                        if (image != null) {
-                          setStateDialog(() {
-                            _pickedImage = image;
-                          });
-                        }
-                      },
-                      child: _pickedImage != null
-                          ? Image.file(
-                              File(_pickedImage!.path),
-                              height: 100,
-                              width: 100,
-                              fit: BoxFit.cover,
-                            )
-                          : (food != null && food['image_url'] != null)
-                              ? Image.network(
-                                  food['image_url'],
-                                  height: 100,
-                                  width: 100,
-                                  fit: BoxFit.cover,
-                                )
-                              : Container(
-                                  height: 100,
-                                  width: 100,
-                                  color: Colors.grey[200],
-                                  child: const Icon(Icons.image, size: 40),
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              elevation: 8,
+              backgroundColor: Colors.white,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40), // Increase dialog width
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Move Add/Edit Food text to top
+                      Text(isEdit ? 'Edit Food' : 'Add Food', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppConstants.primaryColor)),
+                      const SizedBox(height: 18),
+                      // Image picker below title
+                      Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              width: 96,
+                              height: 96,
+                              color: Colors.grey[200],
+                              child: _pickedImage != null
+                                  ? Image.file(File(_pickedImage!.path), fit: BoxFit.cover)
+                                  : (food != null && food['image_url'] != null)
+                                      ? Image.network(food['image_url'], fit: BoxFit.cover)
+                                      : const Icon(Icons.fastfood, size: 40, color: Colors.grey),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 6,
+                            right: 6,
+                            child: InkWell(
+                              onTap: () async {
+                                final ImagePicker picker = ImagePicker();
+                                final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                                if (image != null) {
+                                  setStateDialog(() {
+                                    _pickedImage = image;
+                                  });
+                                }
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: AppConstants.primaryColor,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
                                 ),
-                    ),
-                  ],
+                                padding: const EdgeInsets.all(8),
+                                child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      // Food name and price fields with same width
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _nameController,
+                              decoration: InputDecoration(
+                                labelText: 'Name',
+                                prefixIcon: Icon(Icons.fastfood, color: AppConstants.primaryColor),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _priceController,
+                              decoration: InputDecoration(
+                                labelText: 'Price',
+                                prefixIcon: Icon(Icons.attach_money, color: AppConstants.primaryColor),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                              ),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _descController,
+                        decoration: InputDecoration(
+                          labelText: 'Description',
+                          prefixIcon: Icon(Icons.description, color: AppConstants.primaryColor),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 16),
+                      // Fixed category dropdown - match height with other input fields
+                      DropdownButtonFormField<String>(
+                        value: selectedCategoryId.isNotEmpty ? selectedCategoryId : null,
+                        items: _categories.map((cat) {
+                          // Define category colors
+                          Color getCategoryColor(String categoryName) {
+                            switch (categoryName.toLowerCase()) {
+                              case 'main course':
+                              case 'main':
+                                return Colors.red.withOpacity(0.1);
+                              case 'beverage':
+                              case 'drink':
+                                return Colors.blue.withOpacity(0.1);
+                              case 'seafood':
+                                return Colors.cyan.withOpacity(0.1);
+                              case 'grilled & bbq':
+                              case 'grilled':
+                              case 'bbq':
+                                return Colors.orange.withOpacity(0.1);
+                              case 'pastries':
+                              case 'pastry':
+                                return Colors.purple.withOpacity(0.1);
+                              case 'desserts':
+                              case 'dessert':
+                                return Colors.yellow.withOpacity(0.1);
+                              case 'snacks':
+                              case 'snack':
+                                return Colors.green.withOpacity(0.1);
+                              case 'etc':
+                              case 'other':
+                                return Colors.grey.withOpacity(0.1);
+                              default:
+                                return Colors.indigo.withOpacity(0.1);
+                            }
+                          }
+                          
+                          return DropdownMenuItem<String>(
+                            value: cat['id'],
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: getCategoryColor(cat['name'] ?? ''),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                cat['name'] ?? '',
+                                style: TextStyle(
+                                  color: AppConstants.primaryColor, 
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                                overflow: TextOverflow.ellipsis, // Prevent text cutoff
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setStateDialog(() {
+                            selectedCategoryId = value ?? '';
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Category',
+                          prefixIcon: Icon(Icons.restaurant_menu, color: AppConstants.primaryColor),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12), // Increase vertical padding
+                        ),
+                        dropdownColor: Colors.white,
+                        isExpanded: true, // Make dropdown expand to full width
+                        menuMaxHeight: 250, // Limit dropdown height
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppConstants.primaryColor,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                            ),
+                            onPressed: _isUploading
+                                ? null
+                                : () async {
+                                    final name = _nameController.text.trim();
+                                    final desc = _descController.text.trim();
+                                    final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
+                                    if (name.isEmpty || price <= 0 || selectedCategoryId.isEmpty) return;
+                                    final confirmed = await _showConfirmationDialog(
+                                      isEdit ? 'Update Food' : 'Add Food',
+                                      isEdit 
+                                        ? 'Are you sure you want to update "${food!['name']}"?'
+                                        : 'Are you sure you want to add "${name}" to your menu?',
+                                    );
+                                    if (!confirmed) return;
+                                    setState(() => _isUploading = true);
+                                    String? imageUrl = food?['image_url'];
+                                    if (_pickedImage != null) {
+                                      imageUrl = await _uploadImage(_pickedImage!);
+                                    }
+                                    try {
+                                      if (isEdit) {
+                                        await Supabase.instance.client
+                                            .from('foods')
+                                            .update({
+                                              'name': name,
+                                              'description': desc,
+                                              'price': price,
+                                              'image_url': imageUrl,
+                                              'category_id': selectedCategoryId,
+                                            })
+                                            .eq('id', food!['id']);
+                                        setState(() => _isUploading = false);
+                                        Navigator.pop(context, true);
+                                        _fetchFoods();
+                                      } else {
+                                        await Supabase.instance.client
+                                            .from('foods')
+                                            .insert({
+                                              'name': name,
+                                              'description': desc,
+                                              'price': price,
+                                              'image_url': imageUrl,
+                                              'created_by': _userId,
+                                              'category_id': selectedCategoryId,
+                                            });
+                                        setState(() => _isUploading = false);
+                                        Navigator.pop(context, true);
+                                        _fetchFoods();
+                                      }
+                                    } catch (e) {
+                                      setState(() => _isUploading = false);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Error ${isEdit ? 'updating' : 'adding'} food: $e'),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                            child: _isUploading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : Text(isEdit ? 'Save' : 'Add', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: _isUploading
-                      ? null
-                      : () async {
-                          final name = _nameController.text.trim();
-                          final desc = _descController.text.trim();
-                          final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
-                          if (name.isEmpty || price <= 0) return;
-                          
-                          // Show confirmation dialog
-                          final confirmed = await _showConfirmationDialog(
-                            isEdit ? 'Update Food' : 'Add Food',
-                            isEdit 
-                              ? 'Are you sure you want to update "${food!['name']}"?'
-                              : 'Are you sure you want to add "${name}" to your menu?',
-                          );
-                          
-                          if (!confirmed) return;
-                          
-                          setState(() => _isUploading = true);
-                          String? imageUrl = food?['image_url'];
-                          if (_pickedImage != null) {
-                            imageUrl = await _uploadImage(_pickedImage!);
-                          }
-                          try {
-                            if (isEdit) {
-                              await Supabase.instance.client
-                                  .from('foods')
-                                  .update({
-                                    'name': name,
-                                    'description': desc,
-                                    'price': price,
-                                    'image_url': imageUrl,
-                                  })
-                                  .eq('id', food!['id']);
-                              setState(() => _isUploading = false);
-                              Navigator.pop(context, true);
-                              _fetchFoods();
-                            } else {
-                              await Supabase.instance.client
-                                  .from('foods')
-                                  .insert({
-                                    'name': name,
-                                    'description': desc,
-                                    'price': price,
-                                    'image_url': imageUrl,
-                                    'created_by': _userId,
-                                  });
-                              setState(() => _isUploading = false);
-                              Navigator.pop(context, true);
-                              _fetchFoods();
-                            }
-                          } catch (e) {
-                            setState(() => _isUploading = false);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error ${isEdit ? 'updating' : 'adding'} food: $e'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          }
-                        },
-                  child: _isUploading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(isEdit ? 'Save' : 'Add'),
-                ),
-              ],
             );
           },
         );
@@ -366,8 +532,17 @@ class _ManageScreenState extends State<_ManageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> categories = [
-      'All', 'Main Course', 'Beverages', 'Seafood', 'BBQ & Grilled', 'Pastries', 'Desserts', 'Snacks', 'Etc.'
+    // Exchange the position of 'Beverages' and 'Seafood' in categories
+    List<Map<String, dynamic>> reorderedCategories = List<Map<String, dynamic>>.from(_categories);
+    int seafoodIdx = reorderedCategories.indexWhere((cat) => (cat['name']?.toLowerCase() ?? '') == 'seafood');
+    int beveragesIdx = reorderedCategories.indexWhere((cat) => (cat['name']?.toLowerCase() ?? '') == 'beverages');
+    if (seafoodIdx != -1 && beveragesIdx != -1 && seafoodIdx > beveragesIdx) {
+      final seafood = reorderedCategories.removeAt(seafoodIdx);
+      reorderedCategories.insert(beveragesIdx, seafood);
+    }
+    final List<Map<String, dynamic>> categories = [
+      {'id': 'all', 'name': 'All'},
+      ...reorderedCategories
     ];
     return ScaffoldMessenger(
       key: _scaffoldMessengerKey,
@@ -527,51 +702,60 @@ class _ManageScreenState extends State<_ManageScreen> {
                             children: [
                               // --- Category Horizontal Scroll ---
                               const SizedBox(height: 8), // 2 spaces margin above
-                              SizedBox(
-                                height: 48,
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(horizontal: 0),
-                                  itemCount: categories.length,
-                                  separatorBuilder: (context, idx) => const SizedBox(width: 8),
-                                  itemBuilder: (context, idx) {
-                                    final cat = categories[idx];
-                                    final bool isSelected = cat == 'All';
-                                    return Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        borderRadius: BorderRadius.circular(24),
-                                        onTap: () {
-                                          // TODO: Implement category filter logic
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                          decoration: BoxDecoration(
-                                            color: isSelected ? AppConstants.primaryColor : Colors.white,
-                                            borderRadius: BorderRadius.circular(24),
-                                            border: Border.all(color: AppConstants.primaryColor.withOpacity(0.15)),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withOpacity(0.04),
-                                                blurRadius: 4,
-                                                offset: const Offset(0, 2),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: SizedBox(
+                                  height: 48,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    padding: const EdgeInsets.symmetric(horizontal: 0),
+                                    itemCount: categories.length,
+                                    separatorBuilder: (context, idx) => const SizedBox(width: 8),
+                                    itemBuilder: (context, idx) {
+                                      final cat = categories[idx];
+                                      final bool isSelected = cat['id'] == _selectedCategoryId;
+                                      return Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          borderRadius: BorderRadius.circular(24),
+                                          onTap: () {
+                                            setState(() {
+                                              _selectedCategoryId = cat['id'];
+                                              _applySearchAndSort();
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                            decoration: BoxDecoration(
+                                              color: isSelected ? AppConstants.primaryColor : Colors.white,
+                                              borderRadius: BorderRadius.circular(24),
+                                              border: Border.all(color: AppConstants.primaryColor.withOpacity(0.15)),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withOpacity(0.04),
+                                                  blurRadius: 4,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                cat['name'],
+                                                style: TextStyle(
+                                                  color: isSelected ? Colors.white : AppConstants.primaryColor,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                                textAlign: TextAlign.center,
                                               ),
-                                            ],
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              cat,
-                                              style: TextStyle(
-                                                color: isSelected ? Colors.white : AppConstants.primaryColor,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                              textAlign: TextAlign.center,
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    );
-                                  },
+                                      );
+                                    },
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -582,36 +766,175 @@ class _ManageScreenState extends State<_ManageScreen> {
                                 ],
                               ),
                               const SizedBox(height: 16),
-                              ..._filteredFoods.map((food) => Card(
-                                    child: ListTile(
-                                      leading: food['image_url'] != null
-                                          ? Image.network(food['image_url'], width: 50, height: 50, fit: BoxFit.cover)
-                                          : const Icon(Icons.fastfood, size: 40),
-                                      title: Text(food['name'] ?? ''),
-                                      subtitle: Text('SAR  ${food['price']?.toStringAsFixed(2) ?? ''}\n${food['description'] ?? ''}'),
-                                      isThreeLine: true,
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.edit, color: Colors.blue),
-                                            onPressed: () async {
-                                              final result = await _showAddOrEditFoodDialog(food: food);
-                                              if (result == true && mounted) {
-                                                _scaffoldMessengerKey.currentState?.showSnackBar(
-                                                  SnackBar(
-                                                    content: Text('"${food['name']}" updated successfully!'),
-                                                    backgroundColor: Colors.green,
+                              ..._filteredFoods.map((food) => Container(
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    child: Material(
+                                      elevation: 4,
+                                      borderRadius: BorderRadius.circular(20),
+                                      color: Colors.white,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            // Image left, vertically centered, larger size
+                                            Container(
+                                              width: 92,
+                                              height: 92,
+                                              alignment: Alignment.center,
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(16),
+                                                child: food['image_url'] != null
+                                                    ? Image.network(food['image_url'], width: 92, height: 92, fit: BoxFit.cover)
+                                                    : Container(
+                                                        width: 92,
+                                                        height: 92,
+                                                        color: Colors.grey[200],
+                                                        child: const Icon(Icons.fastfood, size: 44, color: Colors.grey),
+                                                      ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 18),
+                                            // Main info column
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  // Grouped container for food name, 3-dot menu, and details
+                                                  Container(
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Row(
+                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                children: [
+                                                                  Text(
+                                                                    food['name'] ?? '',
+                                                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                                                    maxLines: 1,
+                                                                    overflow: TextOverflow.ellipsis,
+                                                                  ),
+                                                                  const SizedBox(height: 1),
+                                                                  // Details in one line, ellipsis if overflow
+                                                                  Text(
+                                                                    food['description'] ?? '',
+                                                                    style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                                                    maxLines: 1,
+                                                                    overflow: TextOverflow.ellipsis,
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                            PopupMenuButton<String>(
+                                                              icon: const Icon(Icons.more_vert, color: Colors.grey),
+                                                              onSelected: (value) async {
+                                                                if (value == 'edit') {
+                                                                  final result = await _showAddOrEditFoodDialog(food: food);
+                                                                  if (result == true && mounted) {
+                                                                    _scaffoldMessengerKey.currentState?.showSnackBar(
+                                                                      SnackBar(
+                                                                        content: Text('"${food['name']}" updated successfully!'),
+                                                                        backgroundColor: Colors.green,
+                                                                      ),
+                                                                    );
+                                                                  }
+                                                                } else if (value == 'delete') {
+                                                                  _deleteFood(food['id']);
+                                                                }
+                                                              },
+                                                              itemBuilder: (context) => [
+                                                                const PopupMenuItem(
+                                                                  value: 'edit',
+                                                                  child: ListTile(
+                                                                    leading: Icon(Icons.edit, color: Colors.blue),
+                                                                    title: Text('Edit'),
+                                                                  ),
+                                                                ),
+                                                                const PopupMenuItem(
+                                                                  value: 'delete',
+                                                                  child: ListTile(
+                                                                    leading: Icon(Icons.delete, color: Colors.red),
+                                                                    title: Text('Delete'),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        const SizedBox(height: 2),
+                                                      ],
+                                                    ),
                                                   ),
-                                                );
-                                              }
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete, color: Colors.red),
-                                            onPressed: () => _deleteFood(food['id']),
-                                          ),
-                                        ],
+                                                  const SizedBox(height: 8),
+                                                  // Category and price row beneath the grouped container
+                                                  Row(
+                                                    children: [
+                                                      Builder(
+                                                        builder: (context) {
+                                                          final category = _categories.firstWhere(
+                                                            (cat) => cat['id'] == food['category_id'],
+                                                            orElse: () => {'name': 'Uncategorized'},
+                                                          );
+                                                          Color getCategoryColor(String categoryName) {
+                                                            switch (categoryName.toLowerCase()) {
+                                                              case 'main course':
+                                                              case 'main':
+                                                                return Colors.red.withOpacity(0.1);
+                                                              case 'beverage':
+                                                              case 'drink':
+                                                                return Colors.blue.withOpacity(0.1);
+                                                              case 'seafood':
+                                                                return Colors.cyan.withOpacity(0.1);
+                                                              case 'grilled & bbq':
+                                                              case 'grilled':
+                                                              case 'bbq':
+                                                                return Colors.orange.withOpacity(0.1);
+                                                              case 'pastries':
+                                                              case 'pastry':
+                                                                return Colors.purple.withOpacity(0.1);
+                                                              case 'desserts':
+                                                              case 'dessert':
+                                                                return Colors.yellow.withOpacity(0.1);
+                                                              case 'snacks':
+                                                              case 'snack':
+                                                                return Colors.green.withOpacity(0.1);
+                                                              case 'etc':
+                                                              case 'other':
+                                                                return Colors.grey.withOpacity(0.1);
+                                                              default:
+                                                                return Colors.indigo.withOpacity(0.1);
+                                                            }
+                                                          }
+                                                          return Container(
+                                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                            decoration: BoxDecoration(
+                                                              color: getCategoryColor(category['name'] ?? ''),
+                                                              borderRadius: BorderRadius.circular(12),
+                                                            ),
+                                                            child: Text(
+                                                              category['name'],
+                                                              style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600, fontSize: 12),
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                      const Spacer(),
+                                                      Text(
+                                                        'SAR ${food['price']?.toStringAsFixed(2) ?? ''}',
+                                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppConstants.primaryColor),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   )),
@@ -1119,4 +1442,4 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
       ),
     );
   }
-} 
+}
