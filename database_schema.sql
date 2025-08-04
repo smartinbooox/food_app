@@ -100,6 +100,26 @@ CREATE TABLE IF NOT EXISTS order_items (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- =====================
+-- CART TABLE
+-- =====================
+CREATE TABLE IF NOT EXISTS cart_items (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    customer_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    food_id UUID REFERENCES foods(id) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    add_ons JSONB DEFAULT '[]',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(customer_id, food_id, add_ons) -- Prevent duplicate items with same add-ons
+);
+
+-- Index for cart queries
+CREATE INDEX IF NOT EXISTS idx_cart_items_customer_id ON cart_items(customer_id);
+
+-- =====================
+-- RIDER EARNINGS TABLE
+-- =====================
 CREATE TABLE IF NOT EXISTS rider_earnings (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     rider_id UUID REFERENCES riders(id) ON DELETE CASCADE,
@@ -139,6 +159,13 @@ ALTER TABLE rider_earnings ENABLE ROW LEVEL SECURITY;
 
 -- Allow all operations for now (since we're using custom auth)
 CREATE POLICY "Allow all rider earnings operations" ON rider_earnings
+    FOR ALL USING (true);
+
+-- RLS Policies for foods table
+ALTER TABLE foods ENABLE ROW LEVEL SECURITY;
+
+-- Allow all operations for now (since we're using custom auth)
+CREATE POLICY "Allow all food operations" ON foods
     FOR ALL USING (true);
 
 -- Functions for common operations

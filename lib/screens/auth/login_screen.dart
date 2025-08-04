@@ -102,9 +102,9 @@ class _LoginScreenState extends State<LoginScreen> {
               nextScreen = RiderProfileSetupScreen(userId: userData['id']);
             }
           } else if (role == 'restaurant') {
-            nextScreen = const RestaurantDashboardScreen();
+            nextScreen = RestaurantDashboardScreen(userId: userData['id']);
           } else {
-            nextScreen = MenuScreen(userName: name);
+            nextScreen = MenuScreen(userName: name, userId: userData['id']);
           }
           Navigator.pushReplacement(
             context,

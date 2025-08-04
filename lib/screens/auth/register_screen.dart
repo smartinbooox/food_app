@@ -217,7 +217,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               children: [
                                 Expanded(
                                   child: RadioListTile<String>(
-                                    title: const Text('Customer'),
+                                    title: const Text(
+                                      'Customer',
+                                      style: TextStyle(fontWeight: FontWeight.w600),
+                                    ),
                                     value: 'customer',
                                     groupValue: _selectedRole,
                                     onChanged: (value) {
@@ -226,11 +229,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       });
                                     },
                                     activeColor: AppConstants.primaryColor,
+                                    contentPadding: EdgeInsets.zero,
                                   ),
                                 ),
                                 Expanded(
                                   child: RadioListTile<String>(
-                                    title: const Text('Rider'),
+                                    title: const Text(
+                                      'Rider',
+                                      style: TextStyle(fontWeight: FontWeight.w600),
+                                    ),
                                     value: 'rider',
                                     groupValue: _selectedRole,
                                     onChanged: (value) {
@@ -239,6 +246,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       });
                                     },
                                     activeColor: AppConstants.primaryColor,
+                                    contentPadding: EdgeInsets.zero,
                                   ),
                                 ),
                               ],

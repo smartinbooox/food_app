@@ -192,10 +192,10 @@ class _ManageScreenState extends State<_ManageScreen> {
               child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
+                  children: [
                       // Move Add/Edit Food text to top
                       Text(isEdit ? 'Edit Food' : 'Add Food', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppConstants.primaryColor)),
                       const SizedBox(height: 18),
@@ -220,15 +220,15 @@ class _ManageScreenState extends State<_ManageScreen> {
                             bottom: 6,
                             right: 6,
                             child: InkWell(
-                              onTap: () async {
-                                final ImagePicker picker = ImagePicker();
-                                final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                                if (image != null) {
-                                  setStateDialog(() {
-                                    _pickedImage = image;
-                                  });
-                                }
-                              },
+                      onTap: () async {
+                        final ImagePicker picker = ImagePicker();
+                        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                        if (image != null) {
+                          setStateDialog(() {
+                            _pickedImage = image;
+                          });
+                        }
+                      },
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: AppConstants.primaryColor,
@@ -238,10 +238,10 @@ class _ManageScreenState extends State<_ManageScreen> {
                                 padding: const EdgeInsets.all(8),
                                 child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
+                                ),
+                    ),
+                  ],
+                ),
                       const SizedBox(height: 24),
                       // Food name and price fields with same width
                       Row(
@@ -356,23 +356,23 @@ class _ManageScreenState extends State<_ManageScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
                             child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
-                          ),
+                ),
                           const SizedBox(width: 12),
-                          ElevatedButton(
+                ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppConstants.primaryColor,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                             ),
-                            onPressed: _isUploading
-                                ? null
-                                : () async {
-                                    final name = _nameController.text.trim();
-                                    final desc = _descController.text.trim();
-                                    final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
+                  onPressed: _isUploading
+                      ? null
+                      : () async {
+                          final name = _nameController.text.trim();
+                          final desc = _descController.text.trim();
+                          final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
                                     if (name.isEmpty || price <= 0 || selectedCategoryId.isEmpty) return;
                                     final confirmed = await _showConfirmationDialog(
                                       isEdit ? 'Update Food' : 'Add Food',
@@ -381,62 +381,62 @@ class _ManageScreenState extends State<_ManageScreen> {
                                         : 'Are you sure you want to add "${name}" to your menu?',
                                     );
                                     if (!confirmed) return;
-                                    setState(() => _isUploading = true);
-                                    String? imageUrl = food?['image_url'];
-                                    if (_pickedImage != null) {
-                                      imageUrl = await _uploadImage(_pickedImage!);
-                                    }
-                                    try {
-                                      if (isEdit) {
-                                        await Supabase.instance.client
-                                            .from('foods')
-                                            .update({
-                                              'name': name,
-                                              'description': desc,
-                                              'price': price,
-                                              'image_url': imageUrl,
+                          setState(() => _isUploading = true);
+                          String? imageUrl = food?['image_url'];
+                          if (_pickedImage != null) {
+                            imageUrl = await _uploadImage(_pickedImage!);
+                          }
+                          try {
+                            if (isEdit) {
+                              await Supabase.instance.client
+                                  .from('foods')
+                                  .update({
+                                    'name': name,
+                                    'description': desc,
+                                    'price': price,
+                                    'image_url': imageUrl,
                                               'category_id': selectedCategoryId,
-                                            })
-                                            .eq('id', food!['id']);
-                                        setState(() => _isUploading = false);
-                                        Navigator.pop(context, true);
-                                        _fetchFoods();
-                                      } else {
-                                        await Supabase.instance.client
-                                            .from('foods')
-                                            .insert({
-                                              'name': name,
-                                              'description': desc,
-                                              'price': price,
-                                              'image_url': imageUrl,
-                                              'created_by': _userId,
+                                  })
+                                  .eq('id', food!['id']);
+                              setState(() => _isUploading = false);
+                              Navigator.pop(context, true);
+                              _fetchFoods();
+                            } else {
+                              await Supabase.instance.client
+                                  .from('foods')
+                                  .insert({
+                                    'name': name,
+                                    'description': desc,
+                                    'price': price,
+                                    'image_url': imageUrl,
+                                    'created_by': _userId,
                                               'category_id': selectedCategoryId,
-                                            });
-                                        setState(() => _isUploading = false);
-                                        Navigator.pop(context, true);
-                                        _fetchFoods();
-                                      }
-                                    } catch (e) {
-                                      setState(() => _isUploading = false);
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
+                                  });
+                              setState(() => _isUploading = false);
+                              Navigator.pop(context, true);
+                              _fetchFoods();
+                            }
+                          } catch (e) {
+                            setState(() => _isUploading = false);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
                                             content: Text('Error ${isEdit ? 'updating' : 'adding'} food: $e'),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  },
-                            child: _isUploading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                  child: _isUploading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
                                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                  )
+                        )
                                 : Text(isEdit ? 'Save' : 'Add', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
+                ),
+              ],
                       ),
                     ],
                   ),
@@ -493,8 +493,8 @@ class _ManageScreenState extends State<_ManageScreen> {
     if (!confirmed) return;
     
     try {
-      await Supabase.instance.client.from('foods').delete().eq('id', foodId);
-      _fetchFoods();
+    await Supabase.instance.client.from('foods').delete().eq('id', foodId);
+    _fetchFoods();
       
       // Show success message
       if (mounted) {
@@ -697,9 +697,9 @@ class _ManageScreenState extends State<_ManageScreen> {
                         ),
                         // --- Food List and Title ---
                         Expanded(
-                          child: ListView(
+                child: ListView(
                             padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                            children: [
+                  children: [
                               // --- Category Horizontal Scroll ---
                               const SizedBox(height: 8), // 2 spaces margin above
                               Container(
@@ -759,10 +759,10 @@ class _ManageScreenState extends State<_ManageScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                                 ],
                               ),
                               const SizedBox(height: 16),
@@ -835,13 +835,13 @@ class _ManageScreenState extends State<_ManageScreen> {
                                                               onSelected: (value) async {
                                                                 if (value == 'edit') {
                                                                   final result = await _showAddOrEditFoodDialog(food: food);
-                                                                  if (result == true && mounted) {
-                                                                    _scaffoldMessengerKey.currentState?.showSnackBar(
+                            if (result == true && mounted) {
+                              _scaffoldMessengerKey.currentState?.showSnackBar(
                                                                       SnackBar(
                                                                         content: Text('"${food['name']}" updated successfully!'),
-                                                                        backgroundColor: Colors.green,
-                                                                      ),
-                                                                    );
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
                                                                   }
                                                                 } else if (value == 'delete') {
                                                                   _deleteFood(food['id']);
@@ -857,7 +857,7 @@ class _ManageScreenState extends State<_ManageScreen> {
                                                                 ),
                                                                 const PopupMenuItem(
                                                                   value: 'delete',
-                                                                  child: ListTile(
+                          child: ListTile(
                                                                     leading: Icon(Icons.delete, color: Colors.red),
                                                                     title: Text('Delete'),
                                                                   ),
@@ -873,7 +873,7 @@ class _ManageScreenState extends State<_ManageScreen> {
                                                   const SizedBox(height: 8),
                                                   // Category and price row beneath the grouped container
                                                   Row(
-                                                    children: [
+                              children: [
                                                       Builder(
                                                         builder: (context) {
                                                           final category = _categories.firstWhere(
@@ -935,14 +935,14 @@ class _ManageScreenState extends State<_ManageScreen> {
                                             ),
                                           ],
                                         ),
-                                      ),
-                                    ),
-                                  )),
-                              if (_filteredFoods.isEmpty)
-                                const Center(child: Text('No foods found. Add your first food!')),
-                            ],
+                            ),
                           ),
-                        ),
+                        )),
+                              if (_filteredFoods.isEmpty)
+                      const Center(child: Text('No foods found. Add your first food!')),
+                  ],
+                ),
+              ),
                       ],
                     );
                   },
@@ -1192,7 +1192,7 @@ class _SettingsScreenState extends State<_SettingsScreen> {
                               labelText: 'Name',
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
                               ),
                               prefixIcon: const Icon(Icons.person),
@@ -1388,53 +1388,53 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
               minimum: const EdgeInsets.all(8),
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(25),
-                  child: BottomNavigationBar(
-                    currentIndex: _currentIndex,
-                    onTap: (index) {
-                      setState(() {
-                        _currentIndex = index;
-                      });
-                    },
-                    type: BottomNavigationBarType.fixed,
-                    backgroundColor: Colors.white,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(25),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.white,
                     selectedItemColor: AppConstants.primaryColor,
-                    unselectedItemColor: Colors.grey,
-                    selectedLabelStyle: const TextStyle(fontSize: 0),
-                    unselectedLabelStyle: const TextStyle(fontSize: 0),
-                    elevation: 0,
-                    items: const [
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.home),
-                        label: '',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.assessment),
-                        label: '',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.assignment), // Clipboard icon for Manage
-                        label: '',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.settings),
-                        label: '',
-                      ),
-                    ],
-                  ),
-                ),
+            unselectedItemColor: Colors.grey,
+            selectedLabelStyle: const TextStyle(fontSize: 0),
+            unselectedLabelStyle: const TextStyle(fontSize: 0),
+            elevation: 0,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.assessment),
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.assignment), // Clipboard icon for Manage
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings),
+                label: '',
+              ),
+            ],
+          ),
+        ),
               ),
             ),
           ),
@@ -1442,4 +1442,4 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
       ),
     );
   }
-}
+} 
