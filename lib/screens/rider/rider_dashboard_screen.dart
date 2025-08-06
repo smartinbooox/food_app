@@ -390,17 +390,19 @@ class _RiderDashboardScreenState extends State<RiderDashboardScreen> {
   }
 
   String _formatDate(DateTime date) {
+    // Convert UTC time to local time
+    final localDate = date.toLocal();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
-    final dateOnly = DateTime(date.year, date.month, date.day);
+    final dateOnly = DateTime(localDate.year, localDate.month, localDate.day);
     
     if (dateOnly == today) {
-      return 'Today, ${date.hour}:${date.minute.toString().padLeft(2, '0')} ${date.hour >= 12 ? 'pm' : 'am'}';
+      return 'Today, ${localDate.hour}:${localDate.minute.toString().padLeft(2, '0')} ${localDate.hour >= 12 ? 'pm' : 'am'}';
     } else if (dateOnly == yesterday) {
-      return 'Yesterday, ${date.hour}:${date.minute.toString().padLeft(2, '0')} ${date.hour >= 12 ? 'pm' : 'am'}';
+      return 'Yesterday, ${localDate.hour}:${localDate.minute.toString().padLeft(2, '0')} ${localDate.hour >= 12 ? 'pm' : 'am'}';
     } else {
-      return '${date.month}/${date.day}, ${date.hour}:${date.minute.toString().padLeft(2, '0')} ${date.hour >= 12 ? 'pm' : 'am'}';
+      return '${localDate.month}/${localDate.day}, ${localDate.hour}:${localDate.minute.toString().padLeft(2, '0')} ${localDate.hour >= 12 ? 'pm' : 'am'}';
     }
   }
 

@@ -308,36 +308,36 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Stack(
-                                      children: [
-                                        Container(
-                                          height: 120,
-                                          decoration: BoxDecoration(
-                                            borderRadius: const BorderRadius.only(
-                                              topLeft: Radius.circular(12),
-                                              topRight: Radius.circular(12),
-                                            ),
-                                          ),
-                                          child: ClipRRect(
-                                            borderRadius: const BorderRadius.only(
-                                              topLeft: Radius.circular(12),
-                                              topRight: Radius.circular(12),
-                                            ),
-                                            child: food['image_url'] != null && food['image_url'].toString().isNotEmpty
-                                                ? Image.network(
-                                                    food['image_url'],
-                                                    fit: BoxFit.cover,
-                                                    width: double.infinity,
-                                                    errorBuilder: (context, error, stackTrace) => Container(
-                                                      color: Colors.grey[200],
-                                                      child: const Center(child: Icon(Icons.broken_image)),
-                                                    ),
-                                                  )
-                                                : Container(
-                                                    color: Colors.grey[200],
-                                                    child: const Center(child: Icon(Icons.fastfood)),
-                                                  ),
-                                          ),
+                                  children: [
+                                    Container(
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(12),
+                                          topRight: Radius.circular(12),
                                         ),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(12),
+                                          topRight: Radius.circular(12),
+                                        ),
+                                        child: food['image_url'] != null && food['image_url'].toString().isNotEmpty
+                                            ? Image.network(
+                                                food['image_url'],
+                                                fit: BoxFit.cover,
+                                                width: double.infinity,
+                                                errorBuilder: (context, error, stackTrace) => Container(
+                                                  color: Colors.grey[200],
+                                                  child: const Center(child: Icon(Icons.broken_image)),
+                                                ),
+                                              )
+                                            : Container(
+                                                color: Colors.grey[200],
+                                                child: const Center(child: Icon(Icons.fastfood)),
+                                              ),
+                                      ),
+                                    ),
                                         // Heart icon overlay
                                         Positioned(
                                           top: 8,
@@ -365,74 +365,74 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                                     ),
                                     Expanded(
                                       child: Padding(
-                                        padding: const EdgeInsets.all(8),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
                                               food['name'] ?? 'Food Item',
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w700,
-                                                color: Colors.black87,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.black87,
                                             ),
-                                            const SizedBox(height: 4),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
                                             Expanded(
                                               child: Text(
                                                 food['description'] ?? 'No description available',
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w400,
-                                                  color: Colors.black54,
-                                                ),
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w400,
+                                              color: Colors.black54,
                                             ),
-                                            const SizedBox(height: 8),
-                                            Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              children: [
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                              ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
                                                 Expanded(
                                                   child: Text(
                                                     'SAR ${(food['price'] ?? 0.0).toStringAsFixed(2)}',
-                                                    style: const TextStyle(
-                                                      fontSize: 14,
-                                                      fontWeight: FontWeight.w700,
-                                                      color: AppConstants.primaryColor,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppConstants.primaryColor,
                                                     ),
                                                     overflow: TextOverflow.ellipsis,
-                                                  ),
                                                 ),
-                                                GestureDetector(
-                                                  onTap: () {
-                                                    widget.onAddToCart(food, []);
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(
+                                              ),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  widget.onAddToCart(food, []);
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
                                                         content: Text('${food['name'] ?? 'Food Item'} added to cart!'),
-                                                        backgroundColor: AppConstants.primaryColor,
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Container(
-                                                    padding: const EdgeInsets.all(6),
-                                                    decoration: BoxDecoration(
-                                                      color: AppConstants.primaryColor,
-                                                      shape: BoxShape.circle,
+                                                      backgroundColor: AppConstants.primaryColor,
                                                     ),
-                                                    child: const Icon(
-                                                      Icons.add,
-                                                      color: Colors.white,
-                                                      size: 16,
-                                                    ),
+                                                  );
+                                                },
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(6),
+                                                  decoration: BoxDecoration(
+                                                    color: AppConstants.primaryColor,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.add,
+                                                    color: Colors.white,
+                                                    size: 16,
                                                   ),
                                                 ),
-                                              ],
-                                            ),
-                                          ],
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                         ),
                                       ),
                                     ),
@@ -509,16 +509,16 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                             )
                           : Image.asset(
                               foodItem['image'] ?? 'assets/images/food_image_1.jpg',
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: Colors.grey[200],
-                                width: double.infinity,
-                                height: double.infinity,
-                                child: const Center(child: Icon(Icons.broken_image)),
-                              ),
-                            ),
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[200],
+                          width: double.infinity,
+                          height: double.infinity,
+                          child: const Center(child: Icon(Icons.broken_image)),
+                        ),
+                      ),
                     ),
                     // Overlay close button in the top right
                     Positioned(
@@ -686,13 +686,23 @@ class _ViewAllScreenState extends State<ViewAllScreen> {
                           ElevatedButton.icon(
                             onPressed: () {
                               widget.onAddToCart(foodItem, selectedAddOns);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Added ${foodItem['name']} to cart!'),
-                                  backgroundColor: AppConstants.primaryColor,
-                                ),
-                              );
-                              Navigator.of(context).popUntil((route) => route.isFirst);
+                              // Close modal first
+                              Navigator.pop(context);
+                              
+                              // Use a post-frame callback to ensure the modal is closed
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Added ${foodItem['name']} to cart!'),
+                                      backgroundColor: AppConstants.primaryColor,
+                                    ),
+                                  );
+                                  
+                                  // Navigate to home screen safely
+                                  Navigator.of(context).popUntil((route) => route.isFirst);
+                                }
+                              });
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppConstants.primaryColor,

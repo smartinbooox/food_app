@@ -8,7 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MenuScreen extends StatefulWidget {
   final String userName;
-  const MenuScreen({super.key, required this.userName});
+  final String? userId;
+  const MenuScreen({super.key, required this.userName, this.userId});
 
   @override
   State<MenuScreen> createState() => _MenuScreenState();
@@ -52,6 +53,7 @@ class _MenuScreenState extends State<MenuScreen> {
     });
     _fetchDynamicMerchants();
     _fetchFavoriteFoods();
+    _loadCartFromDatabase(); // Load cart items from database
   }
 
   Future<void> _fetchFavoriteFoods() async {
@@ -62,30 +64,225 @@ class _MenuScreenState extends State<MenuScreen> {
     });
   }
 
-  Future<void> _fetchDynamicMerchants() async {
-    // Fetch all admins from Supabase
-    final response = await Supabase.instance.client
-        .from('users')
-        .select()
-        .eq('role', 'admin');
-    final allAdmins = List<Map<String, dynamic>>.from(response as List);
-
-    // Only include admins who have at least one food
-    List<Map<String, dynamic>> dynamicMerchants = [];
-    for (final admin in allAdmins) {
-      final foods = await Supabase.instance.client
-          .from('foods')
-          .select('id')
-          .eq('created_by', admin['id']);
-      if (foods.isNotEmpty) {
-        dynamicMerchants.add(admin);
+  Future<void> _loadCartFromDatabase() async {
+    try {
+      final userId = await _getCurrentUserId();
+      if (userId == null) {
+        print('DEBUG: No user ID found for loading cart');
+        return;
       }
-    }
 
-    setState(() {
-      _dynamicMerchants = dynamicMerchants;
-      _isLoadingDynamicMerchants = false;
-    });
+      print('DEBUG: Loading cart from database for user: $userId');
+      
+      final response = await Supabase.instance.client
+          .from('cart_items')
+          .select('''
+            *,
+            foods(
+              id,
+              name,
+              description,
+              price,
+              image_url,
+              created_by
+            )
+          ''')
+          .eq('customer_id', userId);
+
+      print('DEBUG: Cart items from database: $response');
+
+      final List<Map<String, dynamic>> cartItems = [];
+      int cartCount = 0;
+
+      for (final item in response) {
+        final food = item['foods'] as Map<String, dynamic>?;
+        if (food != null) {
+          cartItems.add({
+            'id': food['id'],
+            'name': food['name'],
+            'image_url': food['image_url'],
+            'price': food['price'],
+            'created_by': food['created_by'],
+            'addOns': List<Map<String, dynamic>>.from(item['add_ons'] ?? []),
+            'quantity': item['quantity'] ?? 1,
+          });
+          cartCount += (item['quantity'] ?? 1) as int;
+        }
+      }
+
+      setState(() {
+        _cartItems.clear();
+        _cartItems.addAll(cartItems);
+        _cartCount = cartCount;
+      });
+
+      print('DEBUG: Loaded ${cartItems.length} items from cart, total count: $cartCount');
+    } catch (e) {
+      print('DEBUG: Error loading cart from database: $e');
+    }
+  }
+
+  Future<String?> _getCurrentUserId() async {
+    try {
+      // First check if we have a userId passed from login
+      if (widget.userId != null) {
+        print('DEBUG: Using userId from widget: ${widget.userId}');
+        return widget.userId;
+      }
+      
+      // Fallback to Supabase Auth
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        print('DEBUG: Using Supabase Auth user: ${user.id}');
+        return user.id;
+      }
+      
+      print('DEBUG: No user ID found');
+      return null;
+    } catch (e) {
+      print('DEBUG: Error getting current user: $e');
+      return null;
+    }
+  }
+
+  Future<bool> _createOrder(String deliveryAddress, String paymentMethod) async {
+    try {
+      print('DEBUG: Creating order...');
+      
+      // Get current user ID
+      final userId = await _getCurrentUserId();
+      if (userId == null) {
+        print('DEBUG: No user ID found');
+        return false;
+      }
+      
+      // Calculate total amount (already includes delivery fee)
+      double totalAmount = _getTotalPrice();
+      const deliveryFee = 3.0;
+      
+      print('DEBUG: Total amount: $totalAmount');
+      print('DEBUG: Cart items: ${_cartItems.length}');
+      
+      // Debug: Print all cart items
+      for (int i = 0; i < _cartItems.length; i++) {
+        print('DEBUG: Cart item $i: ${_cartItems[i]}');
+      }
+      
+      // Group items by merchant (restaurant)
+      Map<String, List<Map<String, dynamic>>> merchantOrders = {};
+      
+      for (final item in _cartItems) {
+        print('DEBUG: Cart item: ${item['name']}, created_by: ${item['created_by']}');
+        final merchantId = item['created_by'];
+        if (merchantId != null) {
+          if (!merchantOrders.containsKey(merchantId)) {
+            merchantOrders[merchantId] = [];
+          }
+          merchantOrders[merchantId]!.add(item);
+        } else {
+          print('DEBUG: Warning - item ${item['name']} has no created_by field');
+        }
+      }
+      
+      print('DEBUG: Merchant orders: ${merchantOrders.keys.length}');
+      
+      // Create orders for each merchant
+      for (final merchantId in merchantOrders.keys) {
+        final items = merchantOrders[merchantId]!;
+        double merchantTotal = 0;
+        
+        for (final item in items) {
+          merchantTotal += (item['price'] ?? 0.0) * (item['quantity'] ?? 1);
+        }
+        
+        // Add proportional delivery fee
+        final proportionalDeliveryFee = (deliveryFee * items.length) / _cartItems.length;
+        merchantTotal += proportionalDeliveryFee;
+        
+        print('DEBUG: Creating order for merchant $merchantId, total: $merchantTotal');
+        
+        // Create order
+        final orderResponse = await Supabase.instance.client
+            .from('orders')
+            .insert({
+              'customer_id': userId,
+              'merchant_id': merchantId,
+              'status': 'pending',
+              'total_amount': merchantTotal,
+              'delivery_fee': proportionalDeliveryFee,
+              'tip_amount': 0.0,
+              'pickup_address': 'Restaurant Location', // You might want to get this from merchant data
+              'delivery_address': deliveryAddress,
+              'estimated_distance': 2.5, // You might want to calculate this
+              'estimated_time': 15, // You might want to calculate this
+            })
+            .select()
+            .single();
+        
+        print('DEBUG: Order created: ${orderResponse['id']}');
+        
+        // Create order items
+        for (final item in items) {
+          await Supabase.instance.client
+              .from('order_items')
+              .insert({
+                'order_id': orderResponse['id'],
+                'food_id': item['id'],
+                'quantity': item['quantity'] ?? 1,
+                'unit_price': item['price'] ?? 0.0,
+                'add_ons': item['add_ons'] ?? [],
+              });
+        }
+        
+        print('DEBUG: Order items created for order ${orderResponse['id']}');
+      }
+      
+      print('DEBUG: All orders created successfully');
+      return true;
+    } catch (e) {
+      print('DEBUG: Error creating order: $e');
+      return false;
+    }
+  }
+
+  Future<void> _fetchDynamicMerchants() async {
+    try {
+      print('DEBUG: Fetching merchants...');
+      
+      // Fetch all users who are admins or restaurants (merchants)
+      final response = await Supabase.instance.client
+          .from('users')
+          .select()
+          .or('role.eq.admin,role.eq.restaurant');
+      
+      print('DEBUG: Users response: $response');
+      final allMerchants = List<Map<String, dynamic>>.from(response as List);
+      print('DEBUG: Found ${allMerchants.length} potential merchants');
+
+      // Only include merchants who have at least one food
+      List<Map<String, dynamic>> dynamicMerchants = [];
+      for (final merchant in allMerchants) {
+        final foods = await Supabase.instance.client
+            .from('foods')
+            .select('id')
+            .eq('created_by', merchant['id']);
+        if (foods.isNotEmpty) {
+          print('DEBUG: Merchant ${merchant['name']} has ${foods.length} foods');
+          dynamicMerchants.add(merchant);
+        }
+      }
+
+      print('DEBUG: Final merchants count: ${dynamicMerchants.length}');
+      setState(() {
+        _dynamicMerchants = dynamicMerchants;
+        _isLoadingDynamicMerchants = false;
+      });
+    } catch (e) {
+      print('DEBUG: Error fetching merchants: $e');
+      setState(() {
+        _isLoadingDynamicMerchants = false;
+      });
+    }
   }
 
   void _startCarouselTimer() {
@@ -120,7 +317,15 @@ class _MenuScreenState extends State<MenuScreen> {
     _showCartPage();
   }
 
-  void _addToCart(Map<String, dynamic> item, List<Map<String, dynamic>> addOns) {
+  Future<void> _addToCart(Map<String, dynamic> item, List<Map<String, dynamic>> addOns) async {
+    print('DEBUG: Adding to cart - item: ${item['name']}, id: ${item['id']}, created_by: ${item['created_by']}');
+    
+    final userId = await _getCurrentUserId();
+    if (userId == null) {
+      print('DEBUG: No user ID found for adding to cart');
+      return;
+    }
+
     // Check if item with same add-ons exists
     final existingIndex = _cartItems.indexWhere((cartItem) {
       if (cartItem['name'] != item['name']) return false;
@@ -133,33 +338,153 @@ class _MenuScreenState extends State<MenuScreen> {
       }
       return true;
     });
-    if (existingIndex != -1) {
-      setState(() {
-        _cartItems[existingIndex]['quantity'] = (_cartItems[existingIndex]['quantity'] ?? 1) + 1;
-        _cartCount++;
-      });
-    } else {
-      setState(() {
-        _cartItems.add({
-          'name': item['name'],
-          'image_url': item['image_url'],
-          'image': item['image'],
-          'price': item['price'],
-          'addOns': List<Map<String, dynamic>>.from(addOns),
-          'quantity': 1,
+
+    try {
+      if (existingIndex != -1) {
+        // Update quantity in database
+        final cartItem = _cartItems[existingIndex];
+        final newQuantity = (cartItem['quantity'] ?? 1) + 1;
+        
+        await Supabase.instance.client
+            .from('cart_items')
+            .update({'quantity': newQuantity})
+            .eq('customer_id', userId)
+            .eq('food_id', item['id'])
+            .eq('add_ons', addOns);
+
+        setState(() {
+          _cartItems[existingIndex]['quantity'] = newQuantity;
+          _cartCount++;
         });
-        _cartCount++;
+
+        // Show notification for quantity increase
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${item['name'] ?? 'Food Item'} quantity increased in cart'),
+            backgroundColor: AppConstants.primaryColor,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        // Add new item to database
+        await Supabase.instance.client
+            .from('cart_items')
+            .insert({
+              'customer_id': userId,
+              'food_id': item['id'],
+              'quantity': 1,
+              'add_ons': addOns,
+            });
+
+        setState(() {
+          _cartItems.add({
+            'id': item['id'],
+            'name': item['name'],
+            'image_url': item['image_url'],
+            'image': item['image'],
+            'price': item['price'],
+            'created_by': item['created_by'],
+            'addOns': List<Map<String, dynamic>>.from(addOns),
+            'quantity': 1,
+          });
+          _cartCount++;
+        });
+
+        // Show notification for new item added
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${item['name'] ?? 'Food Item'} added to cart'),
+            backgroundColor: AppConstants.primaryColor,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('DEBUG: Error adding to cart: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error adding item to cart'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _updateCartItemQuantity(int index, int newQuantity) async {
+    try {
+      final userId = await _getCurrentUserId();
+      if (userId == null) return;
+
+      final item = _cartItems[index];
+      
+      if (newQuantity <= 0) {
+        // Remove item from database
+        await Supabase.instance.client
+            .from('cart_items')
+            .delete()
+            .eq('customer_id', userId)
+            .eq('food_id', item['id'])
+            .eq('add_ons', item['addOns']);
+
+        setState(() {
+          _cartItems.removeAt(index);
+          _cartCount = _cartCount > 0 ? _cartCount - 1 : 0;
+        });
+      } else {
+        // Update quantity in database
+        await Supabase.instance.client
+            .from('cart_items')
+            .update({'quantity': newQuantity})
+            .eq('customer_id', userId)
+            .eq('food_id', item['id'])
+            .eq('add_ons', item['addOns']);
+
+        setState(() {
+          _cartItems[index]['quantity'] = newQuantity;
+          if (newQuantity > (item['quantity'] ?? 1)) {
+            _cartCount++;
+          } else {
+            _cartCount = _cartCount > 0 ? _cartCount - 1 : 0;
+          }
+        });
+      }
+    } catch (e) {
+      print('DEBUG: Error updating cart item quantity: $e');
+    }
+  }
+
+  Future<void> _clearCart() async {
+    try {
+      final userId = await _getCurrentUserId();
+      if (userId == null) return;
+
+      // Clear cart from database
+      await Supabase.instance.client
+          .from('cart_items')
+          .delete()
+          .eq('customer_id', userId);
+
+      setState(() {
+        _cartItems.clear();
+        _cartCount = 0;
       });
+    } catch (e) {
+      print('DEBUG: Error clearing cart: $e');
     }
   }
 
   double _getTotalPrice() {
-    return _cartItems.fold(0.0, (total, item) {
+    double subtotal = _cartItems.fold(0.0, (total, item) {
       double itemTotal = item['price'] * (item['quantity'] ?? 1);
       final addOns = item['addOns'] as List<Map<String, dynamic>>? ?? [];
       double addOnsTotal = addOns.fold(0.0, (addOnTotal, addOn) => addOnTotal + addOn['price']) * (item['quantity'] ?? 1);
       return total + itemTotal + addOnsTotal;
     });
+    
+    // Add delivery fee
+    const deliveryFee = 3.0;
+    return subtotal + deliveryFee;
   }
 
   void _onAvatarPressed() {
@@ -222,58 +547,58 @@ class _MenuScreenState extends State<MenuScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           return Container(
-            height: MediaQuery.of(context).size.height * 0.7,
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        height: MediaQuery.of(context).size.height * 0.7,
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'My Favorites',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
+                const Text(
+                  'My Favorites',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                const SizedBox(height: 20),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
                 if (_favoriteFoods.isEmpty)
-                  const Expanded(
-                    child: Center(
-                      child: Text(
-                        'No favorites yet!\nTap the heart icon to add items to your favorites.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
+              const Expanded(
+                child: Center(
+                  child: Text(
+                    'No favorites yet!\nTap the heart icon to add items to your favorites.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
                     ),
-                  )
-                else
-                  Expanded(
-                    child: ListView.builder(
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: ListView.builder(
                       itemCount: _favoriteFoods.length,
-                      itemBuilder: (context, index) {
+                  itemBuilder: (context, index) {
                         final item = _favoriteFoods[index];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: ListTile(
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
-                                  ? Image.network(
-                                      item['image_url'],
-                                      width: 60,
-                                      height: 60,
-                                      fit: BoxFit.cover,
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
+                              ? Image.network(
+                                  item['image_url'],
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) => Container(
                                         width: 60,
                                         height: 60,
@@ -287,29 +612,29 @@ class _MenuScreenState extends State<MenuScreen> {
                                       color: Colors.grey[200],
                                       child: const Icon(Icons.fastfood, size: 40),
                                     ),
-                            ),
-                            title: Text(
+                        ),
+                        title: Text(
                               item['name'] ?? 'Food Item',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Text('SAR ${item['price']?.toStringAsFixed(2) ?? ''}'),
-                            trailing: IconButton(
-                              onPressed: () {
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text('SAR ${item['price']?.toStringAsFixed(2) ?? ''}'),
+                        trailing: IconButton(
+                          onPressed: () {
                                 _toggleFavorite(item);
                                 setModalState(() {}); // Refresh the modal
-                              },
+                          },
                               icon: const Icon(
-                                Icons.favorite,
-                                color: Colors.red,
-                              ),
-                            ),
+                            Icons.favorite,
+                            color: Colors.red,
                           ),
-                        );
-                      },
-                    ),
-                  ),
-              ],
-            ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
           );
         },
       ),
@@ -546,9 +871,9 @@ class _MenuScreenState extends State<MenuScreen> {
                                         child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
                                             ? Image.network(
                                                 item['image_url'],
-                                                width: 60,
-                                                height: 60,
-                                                fit: BoxFit.cover,
+                                          width: 60,
+                                          height: 60,
+                                          fit: BoxFit.cover,
                                                 errorBuilder: (context, error, stackTrace) => Container(
                                                   width: 60,
                                                   height: 60,
@@ -567,7 +892,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                                   color: Colors.grey[200],
                                                   child: const Icon(Icons.broken_image),
                                                 ),
-                                              ),
+                                        ),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
@@ -589,20 +914,20 @@ class _MenuScreenState extends State<MenuScreen> {
                                                   children: addOns.map((addOn) => Padding(
                                                     padding: const EdgeInsets.only(bottom: 2),
                                                     child: Row(
-                                                      children: [
+                                                    children: [
                                                         Expanded(
                                                           child: Text(
-                                                            '+ ${addOn['name']}',
-                                                            style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                                        '+ ${addOn['name']}',
+                                                        style: const TextStyle(fontSize: 13, color: Colors.grey),
                                                             overflow: TextOverflow.ellipsis,
-                                                          ),
+                                                      ),
                                                         ),
                                                         const SizedBox(width: 8),
-                                                        Text(
-                                                          'SAR ${addOn['price'].toStringAsFixed(2)}',
-                                                          style: TextStyle(fontSize: 13, color: AppConstants.primaryColor),
-                                                        ),
-                                                      ],
+                                                      Text(
+                                                        'SAR ${addOn['price'].toStringAsFixed(2)}',
+                                                        style: TextStyle(fontSize: 13, color: AppConstants.primaryColor),
+                                                      ),
+                                                    ],
                                                     ),
                                                   )).toList(),
                                                 ),
@@ -621,16 +946,8 @@ class _MenuScreenState extends State<MenuScreen> {
                                       Row(
                                         children: [
                                           IconButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                if (quantity - 1 <= 0) {
-                                                  _cartItems.removeAt(index);
-                                                  _cartCount = _cartCount > 0 ? _cartCount - 1 : 0;
-                                                } else {
-                                                  _cartItems[index]['quantity'] = quantity - 1;
-                                                  _cartCount = _cartCount > 0 ? _cartCount - 1 : 0;
-                                                }
-                                              });
+                                            onPressed: () async {
+                                              await _updateCartItemQuantity(index, quantity - 1);
                                               setModalState(() {});
                                             },
                                             icon: const Icon(Icons.remove_circle_outline),
@@ -644,11 +961,8 @@ class _MenuScreenState extends State<MenuScreen> {
                                             ),
                                           ),
                                           IconButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                _cartItems[index]['quantity'] = quantity + 1;
-                                                _cartCount++;
-                                              });
+                                            onPressed: () async {
+                                              await _updateCartItemQuantity(index, quantity + 1);
                                               setModalState(() {});
                                             },
                                             icon: const Icon(Icons.add_circle_outline),
@@ -795,16 +1109,16 @@ class _MenuScreenState extends State<MenuScreen> {
                             )
                           : Image.asset(
                               foodItem['image'] ?? 'assets/images/food_image_1.jpg',
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: Colors.grey[200],
-                                width: double.infinity,
-                                height: double.infinity,
-                                child: const Center(child: Icon(Icons.broken_image)),
-                              ),
-                            ),
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[200],
+                          width: double.infinity,
+                          height: double.infinity,
+                          child: const Center(child: Icon(Icons.broken_image)),
+                        ),
+                      ),
                     ),
                     // Overlay Row with only the close button on the right
                     Positioned(
@@ -966,15 +1280,26 @@ class _MenuScreenState extends State<MenuScreen> {
                             ],
                           ),
                           ElevatedButton.icon(
-                            onPressed: () {
-                              _addToCart(foodItem, selectedAddOns);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Added ${foodItem['name'] ?? 'Food Item'} to cart!'),
-                                  backgroundColor: AppConstants.primaryColor,
-                                ),
-                              );
-                              Navigator.of(context).popUntil((route) => route.isFirst);
+                            onPressed: () async {
+                              await _addToCart(foodItem, selectedAddOns);
+                              
+                              // Close modal first
+                              Navigator.pop(context);
+                              
+                              // Use a post-frame callback to ensure the modal is closed
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Added ${foodItem['name'] ?? 'Food Item'} to cart!'),
+                                      backgroundColor: AppConstants.primaryColor,
+                                    ),
+                                  );
+                                  
+                                  // Navigate to home screen safely
+                                  Navigator.of(context).popUntil((route) => route.isFirst);
+                                }
+                              });
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFd00000),
@@ -1157,29 +1482,28 @@ class _MenuScreenState extends State<MenuScreen> {
 
   // Add the new method to show the checkout details modal
   void _showCheckoutDetailsModal() {
+    final addressController = TextEditingController();
     String paymentMethod = '';
     String onlinePaymentType = '';
-    final addressController = TextEditingController();
-    String error = ''; // Move error here, outside the builder
+    String error = '';
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
+        final double totalPrice = _getTotalPrice();
         return StatefulBuilder(
           builder: (context, setModalState) {
-            double totalPrice = _getTotalPrice();
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Stack(
-                children: [
-                  Container(
-                    height: MediaQuery.of(context).size.height * 0.85,
-                    padding: const EdgeInsets.all(20),
+            return Stack(
+              children: [
+                Container(
+                  height: MediaQuery.of(context).size.height * 0.85,
+                  padding: const EdgeInsets.all(20),
+                  child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1296,7 +1620,8 @@ class _MenuScreenState extends State<MenuScreen> {
                           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                         ),
                         const SizedBox(height: 8),
-                        Expanded(
+                        SizedBox(
+                          height: 200, // Fixed height for the order summary list
                           child: ListView.builder(
                             itemCount: _cartItems.length,
                             itemBuilder: (context, index) {
@@ -1356,6 +1681,35 @@ class _MenuScreenState extends State<MenuScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
+                        // Delivery fee breakdown
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Subtotal:',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            Text(
+                              'SAR ${(totalPrice - 3.0).toStringAsFixed(2)}',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Delivery Fee:',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            Text(
+                              'SAR 3.00',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ],
+                        ),
+                        const Divider(),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -1373,7 +1727,7 @@ class _MenuScreenState extends State<MenuScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: () async {
                               if (addressController.text.trim().isEmpty) {
                                 setModalState(() {
                                   error = 'Please enter your delivery address.';
@@ -1400,17 +1754,44 @@ class _MenuScreenState extends State<MenuScreen> {
                                 return;
                               }
                               // Cash on Delivery: Place order directly
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Order placed successfully!'),
-                                  backgroundColor: AppConstants.primaryColor,
-                                ),
-                              );
-                              setState(() {
-                                _cartItems.clear();
-                                _cartCount = 0;
+                              setModalState(() {
+                                error = 'Processing order...';
                               });
-                              Navigator.of(context).popUntil((route) => route.isFirst);
+                              
+                              final success = await _createOrder(
+                                addressController.text.trim(),
+                                paymentMethod,
+                              );
+                              
+                              if (success) {
+                                setModalState(() {
+                                  error = '';
+                                });
+                                
+                                // Close checkout modal first
+                                Navigator.pop(context);
+                                
+                                // Use a post-frame callback to ensure the modal is closed
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Order placed successfully!'),
+                                        backgroundColor: AppConstants.primaryColor,
+                                      ),
+                                    );
+                                    
+                                    // Navigate to home screen safely
+                                    Navigator.of(context).popUntil((route) => route.isFirst);
+                                  }
+                                });
+                                
+                                await _clearCart();
+                              } else {
+                                setModalState(() {
+                                  error = 'Failed to place order. Please try again.';
+                                });
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppConstants.primaryColor,
@@ -1429,69 +1810,69 @@ class _MenuScreenState extends State<MenuScreen> {
                       ],
                     ),
                   ),
-                  if (error.isNotEmpty)
-                    Positioned.fill(
-                      child: Container(
-                        color: Colors.black.withValues(alpha: 0.25), // Dim background
-                        child: Center(
-                          child: Container(
-                            width: 220,
-                            height: 100,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: AppConstants.primaryColor,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withAlpha((255 * 0.08).round()),
-                                  blurRadius: 6,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Stack(
-                              children: [
-                                Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                    child: Text(
-                                      error,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                ),
+                if (error.isNotEmpty)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.25), // Dim background
+                      child: Center(
+                        child: Container(
+                          width: 220,
+                          height: 100,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppConstants.primaryColor,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha((255 * 0.08).round()),
+                                blurRadius: 6,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                  child: Text(
+                                    error,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
-                                Positioned(
-                                  top: 4,
-                                  right: 4,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setModalState(() {
-                                        error = '';
-                                      });
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      padding: const EdgeInsets.all(2),
-                                      child: const Icon(Icons.close, size: 18, color: Color(0xFFd00000)),
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setModalState(() {
+                                      error = '';
+                                    });
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
                                     ),
+                                    padding: const EdgeInsets.all(2),
+                                    child: const Icon(Icons.close, size: 18, color: Color(0xFFd00000)),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             );
           },
         );
@@ -1662,11 +2043,19 @@ class _MenuScreenState extends State<MenuScreen> {
                                       backgroundColor: AppConstants.primaryColor,
                                     ),
                                   );
-                                  setState(() {
-                                    _cartItems.clear();
-                                    _cartCount = 0;
+                                  
+                                  // Close modal first
+                                  Navigator.pop(context);
+                                  
+                                  // Use a post-frame callback to ensure the modal is closed
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    if (mounted) {
+                                      // Navigate to home screen safely
+                                      Navigator.of(context).popUntil((route) => route.isFirst);
+                                    }
                                   });
-                                  Navigator.of(context).popUntil((route) => route.isFirst);
+                                  
+                                  await _clearCart();
                                 }
                               },
                         style: ElevatedButton.styleFrom(
@@ -1728,20 +2117,20 @@ class _MenuScreenState extends State<MenuScreen> {
     return GestureDetector(
       onTap: () => _showFoodDetailsModal(food),
       child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((255 * 0.1).round()),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha((255 * 0.1).round()),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Stack(
               children: [
                 Container(
@@ -1752,27 +2141,27 @@ class _MenuScreenState extends State<MenuScreen> {
                       topRight: Radius.circular(12),
                     ),
                   ),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
-                    ),
-                    child: food['image_url'] != null && food['image_url'].toString().isNotEmpty
-                        ? Image.network(
-                            food['image_url'],
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              color: Colors.grey[200],
-                              child: const Center(child: Icon(Icons.broken_image)),
-                            ),
-                          )
-                        : Container(
-                            color: Colors.grey[200],
-                            child: const Center(child: Icon(Icons.fastfood)),
-                          ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
                   ),
+                  child: food['image_url'] != null && food['image_url'].toString().isNotEmpty
+                      ? Image.network(
+                          food['image_url'],
+                          fit: BoxFit.cover,
+                            width: double.infinity,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: Colors.grey[200],
+                            child: const Center(child: Icon(Icons.broken_image)),
+                          ),
+                        )
+                      : Container(
+                          color: Colors.grey[200],
+                          child: const Center(child: Icon(Icons.fastfood)),
+                        ),
                 ),
+              ),
                 // Heart icon overlay
                 Positioned(
                   top: 8,
@@ -1795,71 +2184,71 @@ class _MenuScreenState extends State<MenuScreen> {
                 ),
               ],
             ),
-            Expanded(
-              child: Padding(
+              Expanded(
+                child: Padding(
                 padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
                       food['name'] ?? 'Food Item',
-                      style: const TextStyle(
+                        style: const TextStyle(
                         fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black87,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
                     const SizedBox(height: 2),
-                    Text(
+                      Text(
                       food['description'] ?? 'No description available',
-                      style: const TextStyle(
+                        style: const TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.black54,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black54,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
                     const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
                         Expanded(
-                          child: Text(
+                            child: Text(
                             'SAR ${(food['price'] ?? 0.0).toStringAsFixed(2)}',
-                            style: const TextStyle(
+                              style: const TextStyle(
                               fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppConstants.primaryColor,
+                                fontWeight: FontWeight.w700,
+                                color: AppConstants.primaryColor,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        GestureDetector(
-                          onTap: onAddToCart,
-                          child: Container(
+                          GestureDetector(
+                            onTap: onAddToCart,
+                            child: Container(
                             padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: AppConstants.primaryColor,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.add,
-                              color: Colors.white,
+                              decoration: BoxDecoration(
+                                color: AppConstants.primaryColor,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.add,
+                                color: Colors.white,
                               size: 16,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
       ),
     );
   }
@@ -1920,7 +2309,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   return buildFoodPreviewCard(
                     foods[index],
                     index,
-                    onAddToCart: () => _addToCart(foods[index], []),
+                    onAddToCart: () async => await _addToCart(foods[index], []),
                     onToggleFavorite: () => _toggleFavorite(foods[index]),
                     isFavorite: _isFavorite(foods[index]),
                   );
@@ -2240,18 +2629,18 @@ class _MenuScreenState extends State<MenuScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(
-                              "Let Mappia deliver it fast!",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                shadows: [
-                                  Shadow(
-                                    offset: const Offset(1, 1),
-                                    blurRadius: 3,
-                                    color: Colors.black.withAlpha((255 * 0.8).round()),
-                                  ),
-                                ],
+                            "Let Mappia deliver it fast!",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              shadows: [
+                                Shadow(
+                                  offset: const Offset(1, 1),
+                                  blurRadius: 3,
+                                  color: Colors.black.withAlpha((255 * 0.8).round()),
+                                ),
+                              ],
                               ),
                             ),
                           ),
@@ -2385,7 +2774,7 @@ class _MenuScreenState extends State<MenuScreen> {
                     ),
                   ],
                 ),
-              ),
+                ),
               ),
               // Merchants section (new, under recommendations)
               Padding(
@@ -2414,31 +2803,31 @@ class _MenuScreenState extends State<MenuScreen> {
                           )
                         : _dynamicMerchants.isEmpty
                             ? const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(20),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.store, size: 48, color: Colors.grey),
-                                      SizedBox(height: 16),
-                                      Text(
-                                        'No merchants available',
-                                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                                      ),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        'Check back later for new merchants',
-                                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                                      ),
-                                    ],
+                            child: Padding(
+                              padding: EdgeInsets.all(20),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.store, size: 48, color: Colors.grey),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'No merchants available',
+                                    style: TextStyle(fontSize: 16, color: Colors.grey),
                                   ),
-                                ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Check back later for new merchants',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            ),
                               )
                             : Column(
                                 children: _dynamicMerchants.map((merchant) {
-                                  return buildMerchantPreview(merchant);
-                                }).toList(),
-                              ),
+                            return buildMerchantPreview(merchant);
+                          }).toList(),
+                    ),
                   ],
                 ),
               ),
@@ -2677,16 +3066,16 @@ class _MenuScreenState extends State<MenuScreen> {
                                 Expanded(
                                   child: Text(
                                     'SAR ${(food['price'] ?? 0.0).toStringAsFixed(2)}',
-                                    style: const TextStyle(
+                                  style: const TextStyle(
                                       fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppConstants.primaryColor,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppConstants.primaryColor,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 GestureDetector(
-                                  onTap: () => _addToCart(food, []),
+                                  onTap: () async => await _addToCart(food, []),
                                   child: Container(
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(

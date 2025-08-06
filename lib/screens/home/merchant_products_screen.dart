@@ -259,13 +259,24 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
                           ElevatedButton.icon(
                             onPressed: () {
                               widget.onAddToCart(foodItem, selectedAddOns);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Added ${foodItem['name'] ?? 'Food Item'} to cart!'),
-                                  backgroundColor: AppConstants.primaryColor,
-                                ),
-                              );
-                              Navigator.of(context).popUntil((route) => route.isFirst);
+                              
+                              // Close modal first
+                              Navigator.pop(context);
+                              
+                              // Use a post-frame callback to ensure the modal is closed
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Added ${foodItem['name'] ?? 'Food Item'} to cart!'),
+                                      backgroundColor: AppConstants.primaryColor,
+                                    ),
+                                  );
+                                  
+                                  // Navigate to home screen safely
+                                  Navigator.of(context).popUntil((route) => route.isFirst);
+                                }
+                              });
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppConstants.primaryColor,
