@@ -6,11 +6,21 @@ class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
   @override
-  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+  State<AdminDashboardScreen> createState() => AdminDashboardScreenState();
 }
 
-class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+class AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _showWeekly = true; // Default to weekly view
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
 
   Future<int> _fetchUserCount() async {
     final response = await Supabase.instance.client
@@ -165,7 +175,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: Column(
               children: [
                 SizedBox(
-                  height: 280, // Increased height to prevent overflow
+                  height: 260, // Adjust as needed for card height
                   child: PageView.builder(
                     controller: _pageController,
                     onPageChanged: (index) {
@@ -186,7 +196,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       switch (slideIndex) {
                         case 0:
                           return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
@@ -197,14 +207,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                   ),
                                   margin: EdgeInsets.zero,
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 20.0),
+                                    padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
                                     child: Column(
                                       children: [
                                         const Text(
                                           'Overall User',
                                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                                         ),
-                                        const SizedBox(height: 10),
+                                        const SizedBox(height: 12),
                                         FutureBuilder<int>(
                                           future: _fetchUserCount(),
                                           builder: (context, snapshot) {
@@ -219,7 +229,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 12),
                                 Row(
                                   children: [
                                     Expanded(
@@ -233,11 +243,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                               borderRadius: BorderRadius.circular(14),
                                             ),
                                             child: Padding(
-                                              padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8),
+                                              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
                                               child: Column(
                                                 children: [
                                                   const Text('Customer', style: TextStyle(fontWeight: FontWeight.w600)),
-                                                  const SizedBox(height: 4),
+                                                  const SizedBox(height: 6),
                                                   Text(count.toString(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
                                                 ],
                                               ),
@@ -246,7 +256,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                         },
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 12),
                                     Expanded(
                                       child: FutureBuilder<int>(
                                         future: _fetchRoleCount('restaurant'),
@@ -258,11 +268,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                               borderRadius: BorderRadius.circular(14),
                                             ),
                                             child: Padding(
-                                              padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8),
+                                              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
                                               child: Column(
                                                 children: [
                                                   const Text('Restaurant', style: TextStyle(fontWeight: FontWeight.w600)),
-                                                  const SizedBox(height: 4),
+                                                  const SizedBox(height: 6),
                                                   Text(count.toString(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
                                                 ],
                                               ),
@@ -271,7 +281,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                         },
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 12),
                                     Expanded(
                                       child: FutureBuilder<int>(
                                         future: _fetchRoleCount('rider'),
@@ -283,11 +293,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                               borderRadius: BorderRadius.circular(14),
                                             ),
                                             child: Padding(
-                                              padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8),
+                                              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
                                               child: Column(
                                                 children: [
                                                   const Text('Rider', style: TextStyle(fontWeight: FontWeight.w600)),
-                                                  const SizedBox(height: 4),
+                                                  const SizedBox(height: 6),
                                                   Text(count.toString(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF800000))),
                                                 ],
                                               ),

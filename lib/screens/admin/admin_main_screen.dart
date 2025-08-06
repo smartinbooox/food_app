@@ -48,7 +48,6 @@ class _ManageScreenState extends State<_ManageScreen> {
   // Floating notification state
   bool _showNotification = false;
   String _notificationMessage = '';
-  String _notificationType = 'info';
   Timer? _notificationTimer;
 
   @override
@@ -69,13 +68,12 @@ class _ManageScreenState extends State<_ManageScreen> {
   }
 
   // Show floating notification
-  void _showFloatingNotification(String message, {String type = 'info'}) {
+  void _showFloatingNotification(String message, {String type = 'success'}) {
     setState(() {
       _notificationMessage = message;
       _notificationType = type;
       _showNotification = true;
     });
-
     // Auto-dismiss after 3 seconds
     _notificationTimer?.cancel();
     _notificationTimer = Timer(const Duration(seconds: 3), () {
@@ -87,24 +85,25 @@ class _ManageScreenState extends State<_ManageScreen> {
     });
   }
 
-  // Get notification color based on type
+  String _notificationType = 'success';
+
   Color _getNotificationColor(String type) {
-    switch (type.toLowerCase()) {
+    switch (type) {
       case 'success':
         return Colors.green;
       case 'error':
         return Colors.red;
       case 'warning':
-        return Colors.orange;
+        return Colors.amber[800]!;
       case 'info':
-      default:
         return Colors.blue;
+      default:
+        return AppConstants.primaryColor;
     }
   }
 
-  // Get notification icon based on type
   IconData _getNotificationIcon(String type) {
-    switch (type.toLowerCase()) {
+    switch (type) {
       case 'success':
         return Icons.check_circle;
       case 'error':
@@ -112,6 +111,7 @@ class _ManageScreenState extends State<_ManageScreen> {
       case 'warning':
         return Icons.warning;
       case 'info':
+        return Icons.info;
       default:
         return Icons.info;
     }
@@ -443,7 +443,6 @@ class _ManageScreenState extends State<_ManageScreen> {
                           final desc = _descController.text.trim();
                           final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
                                     if (name.isEmpty || price <= 0 || selectedCategoryId.isEmpty) return;
-<<<<<<< HEAD
                           final confirmed = await _showConfirmationDialog(
                             isEdit ? 'Update Food' : 'Add Food',
                             isEdit 
@@ -451,15 +450,6 @@ class _ManageScreenState extends State<_ManageScreen> {
                               : 'Are you sure you want to add "${name}" to your menu?',
                           );
                           if (!confirmed) return;
-=======
-                                    final confirmed = await _showConfirmationDialog(
-                                      isEdit ? 'Update Food' : 'Add Food',
-                                      isEdit 
-                                        ? 'Are you sure you want to update "${food!['name']}"?'
-                                        : 'Are you sure you want to add "${name}" to your menu?',
-                                    );
-                                    if (!confirmed) return;
->>>>>>> 8bba7c064b24a59bfac93f202cd574a06e897943
                           setState(() => _isUploading = true);
                           String? imageUrl = food?['image_url'];
                           if (_pickedImage != null) {
@@ -498,16 +488,7 @@ class _ManageScreenState extends State<_ManageScreen> {
                           } catch (e) {
                             setState(() => _isUploading = false);
                             if (context.mounted) {
-<<<<<<< HEAD
                                         _showFloatingNotification('Error ${isEdit ? 'updating' : 'adding'} food: $e', type: 'error');
-=======
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                            content: Text('Error ${isEdit ? 'updating' : 'adding'} food: $e'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
->>>>>>> 8bba7c064b24a59bfac93f202cd574a06e897943
                             }
                           }
                         },
@@ -576,8 +557,8 @@ class _ManageScreenState extends State<_ManageScreen> {
     if (!confirmed) return;
     
     try {
-    await Supabase.instance.client.from('foods').delete().eq('id', foodId);
-    _fetchFoods();
+      await Supabase.instance.client.from('foods').delete().eq('id', foodId);
+      _fetchFoods();
       
       // Show success message
       if (context.mounted) {
@@ -645,7 +626,6 @@ class _ManageScreenState extends State<_ManageScreen> {
                                       ),
                                     ],
                                   ),
-<<<<<<< HEAD
                                   child: Padding(
                                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 22),
                                     child: Row(
@@ -654,155 +634,6 @@ class _ManageScreenState extends State<_ManageScreen> {
                                         // Search bar with button inside
                                         Expanded(
                                           flex: 3,
-=======
-                                ],
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(16, 16, 16, 22),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    // Search bar with button inside
-                                    Expanded(
-                                      flex: 3,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: TextField(
-                                                controller: _searchController,
-                                                decoration: InputDecoration(
-                                                  hintText: 'Search food...',
-                                                  border: InputBorder.none,
-                                                  isCollapsed: false,
-                                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                                                  prefixIcon: const Icon(Icons.search, color: AppConstants.primaryColor),
-                                                ),
-                                                textAlignVertical: TextAlignVertical.center,
-                                                onSubmitted: (value) {
-                                                  _applySearchAndSort();
-                                                },
-                                              ),
-                                            ),
-                                            // Search button with inner border
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: AppConstants.primaryColor,
-                                                borderRadius: const BorderRadius.only(
-                                                  topRight: Radius.circular(12),
-                                                  bottomRight: Radius.circular(12),
-                                                ),
-                                                border: Border.all(
-                                                  color: Colors.white,
-                                                  width: 2,
-                                                ),
-                                              ),
-                                              child: Material(
-                                                color: Colors.transparent,
-                                                borderRadius: const BorderRadius.only(
-                                                  topRight: Radius.circular(12),
-                                                  bottomRight: Radius.circular(12),
-                                                ),
-                                                child: InkWell(
-                                                  borderRadius: const BorderRadius.only(
-                                                    topRight: Radius.circular(12),
-                                                    bottomRight: Radius.circular(12),
-                                                  ),
-                                                  onTap: _applySearchAndSort,
-                                                  child: Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                                    child: const Icon(Icons.arrow_forward, color: Colors.white),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    // Sort filter as button with dropdown inside
-                                    Expanded(
-                                      flex: 2,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: AppConstants.primaryColor.withOpacity(0.2)),
-                                        ),
-                                        child: DropdownButtonHideUnderline(
-                                          child: ButtonTheme(
-                                            alignedDropdown: true,
-                                            child: DropdownButton<String>(
-                                              value: _selectedSort,
-                                              isExpanded: true,
-                                              icon: const Icon(Icons.arrow_drop_down, color: AppConstants.primaryColor),
-                                              style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600),
-                                              dropdownColor: Colors.white,
-                                              borderRadius: BorderRadius.circular(12),
-                                              items: _sortOptions.map((option) {
-                                                return DropdownMenuItem<String>(
-                                                  value: option,
-                                                  child: Text(option, style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600)),
-                                                );
-                                              }).toList(),
-                                              onChanged: (value) {
-                                                if (value != null) {
-                                                  setState(() {
-                                                    _selectedSort = value;
-                                                  });
-                                                  _applySearchAndSort();
-                                                }
-                                              },
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 4), // 8px gap below the container
-                          ],
-                        ),
-                        // --- Food List and Title ---
-                        Expanded(
-                child: ListView(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                  children: [
-                              // --- Category Horizontal Scroll ---
-                              const SizedBox(height: 8), // 2 spaces margin above
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: SizedBox(
-                                  height: 48,
-                                  child: ListView.separated(
-                                    scrollDirection: Axis.horizontal,
-                                    padding: const EdgeInsets.symmetric(horizontal: 0),
-                                    itemCount: categories.length,
-                                    separatorBuilder: (context, idx) => const SizedBox(width: 8),
-                                    itemBuilder: (context, idx) {
-                                      final cat = categories[idx];
-                                      final bool isSelected = cat['id'] == _selectedCategoryId;
-                                      return Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          borderRadius: BorderRadius.circular(24),
-                                          onTap: () {
-                                            setState(() {
-                                              _selectedCategoryId = cat['id'];
-                                              _applySearchAndSort();
-                                            });
-                                          },
->>>>>>> 8bba7c064b24a59bfac93f202cd574a06e897943
                                           child: Container(
                                             decoration: BoxDecoration(
                                               color: Colors.white,
@@ -905,7 +736,6 @@ class _ManageScreenState extends State<_ManageScreen> {
                                     ),
                                   ),
                                 ),
-<<<<<<< HEAD
                                 const SizedBox(height: 4), // 8px gap below the container
                               ],
                             ),
@@ -965,43 +795,6 @@ class _ManageScreenState extends State<_ManageScreen> {
                                                     textAlign: TextAlign.center,
                                                   ),
                                                 ),
-=======
-                              ),
-                              const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              ..._filteredFoods.map((food) => Container(
-                                    margin: const EdgeInsets.only(bottom: 16),
-                                    child: Material(
-                                      elevation: 4,
-                                      borderRadius: BorderRadius.circular(20),
-                                      color: Colors.white,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16.0),
-                                        child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            // Image left, vertically centered, larger size
-                                            Container(
-                                              width: 92,
-                                              height: 92,
-                                              alignment: Alignment.center,
-                                              child: ClipRRect(
-                                                borderRadius: BorderRadius.circular(16),
-                                                child: food['image_url'] != null
-                                                    ? Image.network(food['image_url'], width: 92, height: 92, fit: BoxFit.cover)
-                                                    : Container(
-                                                        width: 92,
-                                                        height: 92,
-                                                        color: Colors.grey[200],
-                                                        child: const Icon(Icons.fastfood, size: 44, color: Colors.grey),
-                                                      ),
->>>>>>> 8bba7c064b24a59bfac93f202cd574a06e897943
                                               ),
                                             ),
                                           );
@@ -1056,7 +849,6 @@ class _ManageScreenState extends State<_ManageScreen> {
                                                         child: Column(
                                                           crossAxisAlignment: CrossAxisAlignment.start,
                                                           children: [
-<<<<<<< HEAD
                                                             Row(
                                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1110,125 +902,12 @@ class _ManageScreenState extends State<_ManageScreen> {
                                                                       ),
                                                                     ),
                                                                   ],
-=======
-                                                            Expanded(
-                                                              child: Column(
-                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                children: [
-                                                                  Text(
-                                                                    food['name'] ?? '',
-                                                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                                                    maxLines: 1,
-                                                                    overflow: TextOverflow.ellipsis,
-                                                                  ),
-                                                                  const SizedBox(height: 1),
-                                                                  // Details in one line, ellipsis if overflow
-                                                                  Text(
-                                                                    food['description'] ?? '',
-                                                                    style: const TextStyle(fontSize: 14, color: Colors.black87),
-                                                                    maxLines: 1,
-                                                                    overflow: TextOverflow.ellipsis,
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                            PopupMenuButton<String>(
-                                                              icon: const Icon(Icons.more_vert, color: Colors.grey),
-                                                              onSelected: (value) async {
-                                                                if (value == 'edit') {
-                                                                  final result = await _showAddOrEditFoodDialog(food: food);
-                            if (result == true && mounted) {
-                              _scaffoldMessengerKey.currentState?.showSnackBar(
-                                                                      SnackBar(
-                                                                        content: Text('"${food['name']}" updated successfully!'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                                                                  }
-                                                                } else if (value == 'delete') {
-                                                                  _deleteFood(food['id']);
-                                                                }
-                                                              },
-                                                              itemBuilder: (context) => [
-                                                                const PopupMenuItem(
-                                                                  value: 'edit',
-                                                                  child: ListTile(
-                                                                    leading: Icon(Icons.edit, color: Colors.blue),
-                                                                    title: Text('Edit'),
-                                                                  ),
-                                                                ),
-                                                                const PopupMenuItem(
-                                                                  value: 'delete',
-                          child: ListTile(
-                                                                    leading: Icon(Icons.delete, color: Colors.red),
-                                                                    title: Text('Delete'),
-                                                                  ),
->>>>>>> 8bba7c064b24a59bfac93f202cd574a06e897943
                                                                 ),
                                                               ],
                                                             ),
                                                             const SizedBox(height: 2),
                                                           ],
                                                         ),
-<<<<<<< HEAD
-=======
-                                                        const SizedBox(height: 2),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 8),
-                                                  // Category and price row beneath the grouped container
-                                                  Row(
-                              children: [
-                                                      Builder(
-                                                        builder: (context) {
-                                                          final category = _categories.firstWhere(
-                                                            (cat) => cat['id'] == food['category_id'],
-                                                            orElse: () => {'name': 'Uncategorized'},
-                                                          );
-                                                          Color getCategoryColor(String categoryName) {
-                                                            switch (categoryName.toLowerCase()) {
-                                                              case 'main course':
-                                                              case 'main':
-                                                                return Colors.red.withOpacity(0.1);
-                                                              case 'beverage':
-                                                              case 'drink':
-                                                                return Colors.blue.withOpacity(0.1);
-                                                              case 'seafood':
-                                                                return Colors.cyan.withOpacity(0.1);
-                                                              case 'grilled & bbq':
-                                                              case 'grilled':
-                                                              case 'bbq':
-                                                                return Colors.orange.withOpacity(0.1);
-                                                              case 'pastries':
-                                                              case 'pastry':
-                                                                return Colors.purple.withOpacity(0.1);
-                                                              case 'desserts':
-                                                              case 'dessert':
-                                                                return Colors.yellow.withOpacity(0.1);
-                                                              case 'snacks':
-                                                              case 'snack':
-                                                                return Colors.green.withOpacity(0.1);
-                                                              case 'etc':
-                                                              case 'other':
-                                                                return Colors.grey.withOpacity(0.1);
-                                                              default:
-                                                                return Colors.indigo.withOpacity(0.1);
-                                                            }
-                                                          }
-                                                          return Container(
-                                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                            decoration: BoxDecoration(
-                                                              color: getCategoryColor(category['name'] ?? ''),
-                                                              borderRadius: BorderRadius.circular(12),
-                                                            ),
-                                                            child: Text(
-                                                              category['name'],
-                                                              style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600, fontSize: 12),
-                                                            ),
-                                                          );
-                                                        },
->>>>>>> 8bba7c064b24a59bfac93f202cd574a06e897943
                                                       ),
                                                       const SizedBox(height: 8),
                                                       // Category and price row beneath the grouped container
@@ -1295,28 +974,12 @@ class _ManageScreenState extends State<_ManageScreen> {
                                                 ),
                                               ],
                                             ),
-<<<<<<< HEAD
                             ),
                           ),
                         )),
                                   if (_filteredFoods.isEmpty)
                       const Center(child: Text('No foods found. Add your first food!')),
                   ],
-=======
-                                          ],
-                                        ),
-                            ),
-                          ),
-                        )),
-                              if (_filteredFoods.isEmpty)
-                      const Center(child: Text('No foods found. Add your first food!')),
-                  ],
-                ),
-              ),
-                      ],
-                    );
-                  },
->>>>>>> 8bba7c064b24a59bfac93f202cd574a06e897943
                 ),
               ),
                           ],
@@ -1344,12 +1007,23 @@ class _ManageScreenState extends State<_ManageScreen> {
         // Floating notification overlay
         if (_showNotification)
           Positioned(
-            top: 0,
+            top: 12,
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 10), // Add top padding
-              color: _getNotificationColor(_notificationType),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+              decoration: BoxDecoration(
+                color: _getNotificationColor(_notificationType),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
               child: Row(
           children: [
                   Icon(_getNotificationIcon(_notificationType), color: Colors.white, size: 24),
@@ -1441,7 +1115,6 @@ class _SettingsScreenState extends State<_SettingsScreen> {
   // Floating notification state
   bool _showNotification = false;
   String _notificationMessage = '';
-  String _notificationType = 'info';
   Timer? _notificationTimer;
 
   @override
@@ -1455,7 +1128,7 @@ class _SettingsScreenState extends State<_SettingsScreen> {
   }
 
   // Show floating notification
-  void _showFloatingNotification(String message, {String type = 'info'}) {
+  void _showFloatingNotification(String message, {String type = 'success'}) {
     setState(() {
       _notificationMessage = message;
       _notificationType = type;
@@ -1473,35 +1146,7 @@ class _SettingsScreenState extends State<_SettingsScreen> {
     });
   }
 
-  // Get notification color based on type
-  Color _getNotificationColor(String type) {
-    switch (type.toLowerCase()) {
-      case 'success':
-        return Colors.green;
-      case 'error':
-        return Colors.red;
-      case 'warning':
-        return Colors.orange;
-      case 'info':
-      default:
-        return Colors.blue;
-    }
-  }
- 
-  // Get notification icon based on type
-  IconData _getNotificationIcon(String type) {
-    switch (type.toLowerCase()) {
-      case 'success':
-        return Icons.check_circle;
-      case 'error':
-        return Icons.error;
-      case 'warning':
-        return Icons.warning;
-      case 'info':
-      default:
-        return Icons.info;
-    }
-  }
+  String _notificationType = 'success';
 
   Future<void> _addUser() async {
     if (!_formKey.currentState!.validate()) return;
@@ -1618,112 +1263,11 @@ class _SettingsScreenState extends State<_SettingsScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                       child: Row(
                         children: [
-<<<<<<< HEAD
                           Icon(Icons.person_add, color: Colors.white),
                           const SizedBox(width: 12),
                           Text(
                             'Add User (Rider/Restaurant)',
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-=======
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _nameController,
-                            decoration: InputDecoration(
-                              labelText: 'Name',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                              ),
-                              prefixIcon: const Icon(Icons.person),
-                            ),
-                            validator: (value) => value == null || value.isEmpty ? 'Enter name' : null,
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _emailController,
-                            decoration: InputDecoration(
-                              labelText: 'Email',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                              ),
-                              prefixIcon: const Icon(Icons.email),
-                            ),
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) return 'Enter email';
-                              final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-                              if (!emailRegex.hasMatch(value)) return 'Enter valid email';
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _passwordController,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                              ),
-                              prefixIcon: const Icon(Icons.lock),
-                            ),
-                            obscureText: true,
-                            validator: (value) => value == null || value.isEmpty ? 'Enter password' : null,
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _contactController,
-                            decoration: InputDecoration(
-                              labelText: 'Contact',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                              ),
-                              prefixIcon: const Icon(Icons.phone),
-                            ),
-                            validator: (value) => value == null || value.isEmpty ? 'Enter contact' : null,
-                          ),
-                          const SizedBox(height: 16),
-                          DropdownButtonFormField<String>(
-                            value: _selectedRole,
-                            items: const [
-                              DropdownMenuItem(value: 'rider', child: Text('Rider')),
-                              DropdownMenuItem(value: 'restaurant', child: Text('Restaurant')),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) setState(() { _selectedRole = value; });
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'Role',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                              ),
-                              prefixIcon: const Icon(Icons.group),
-                            ),
-                            dropdownColor: Colors.white,
-                          ),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _isLoading ? null : _addUser,
-                              style: AppConstants.primaryButton,
-                              icon: _isLoading
-                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                  : const Icon(Icons.person_add, color: Colors.white),
-                              label: Text(
-                                _isLoading ? 'Adding...' : 'Add User',
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
-                            ),
->>>>>>> 8bba7c064b24a59bfac93f202cd574a06e897943
                           ),
                         ],
                       ),
@@ -1891,11 +1435,11 @@ class _SettingsScreenState extends State<_SettingsScreen> {
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 10), // Add top padding
-              color: _getNotificationColor(_notificationType),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+              color: AppConstants.primaryColor,
               child: Row(
                 children: [
-                  Icon(_getNotificationIcon(_notificationType), color: Colors.white, size: 24),
+                  Icon(Icons.info, color: Colors.white, size: 24),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -1972,11 +1516,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
             },
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.white,
-<<<<<<< HEAD
             selectedItemColor: AppConstants.primaryColor,
-=======
-                    selectedItemColor: AppConstants.primaryColor,
->>>>>>> 8bba7c064b24a59bfac93f202cd574a06e897943
             unselectedItemColor: Colors.grey,
             selectedLabelStyle: const TextStyle(fontSize: 0),
             unselectedLabelStyle: const TextStyle(fontSize: 0),
