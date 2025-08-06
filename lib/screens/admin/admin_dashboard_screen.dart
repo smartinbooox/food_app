@@ -142,7 +142,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Future<int> _fetchFoodCount() async {
     final response = await Supabase.instance.client
-        .from('food')
+        .from('foods')
         .select('id');
     return (response as List).length;
   }

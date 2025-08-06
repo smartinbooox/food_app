@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import '../../core/constants/app_constants.dart';
+import 'dart:async'; // Added for Timer
 
 class AdminMainScreen extends StatefulWidget {
   const AdminMainScreen({super.key});
@@ -30,6 +31,7 @@ class _ManageScreenState extends State<_ManageScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   XFile? _pickedImage;
   bool _isUploading = false;
 
@@ -40,12 +42,79 @@ class _ManageScreenState extends State<_ManageScreen> {
   bool _isLoadingCategories = false;
   String? _userId;
   String _selectedCategoryId = 'all';
+  String _selectedSort = 'All';
+  final List<String> _sortOptions = ['All', 'Best Seller', 'Recent', 'Popular', 'Categories'];
+
+  // Floating notification state
+  bool _showNotification = false;
+  String _notificationMessage = '';
+  String _notificationType = 'info';
+  Timer? _notificationTimer;
 
   @override
   void initState() {
     super.initState();
     _fetchCurrentUserId();
     _fetchCategories();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    _priceController.dispose();
+    _searchController.dispose();
+    _notificationTimer?.cancel();
+    super.dispose();
+  }
+
+  // Show floating notification
+  void _showFloatingNotification(String message, {String type = 'info'}) {
+    setState(() {
+      _notificationMessage = message;
+      _notificationType = type;
+      _showNotification = true;
+    });
+
+    // Auto-dismiss after 3 seconds
+    _notificationTimer?.cancel();
+    _notificationTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _showNotification = false;
+        });
+      }
+    });
+  }
+
+  // Get notification color based on type
+  Color _getNotificationColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'success':
+        return Colors.green;
+      case 'error':
+        return Colors.red;
+      case 'warning':
+        return Colors.orange;
+      case 'info':
+      default:
+        return Colors.blue;
+    }
+  }
+
+  // Get notification icon based on type
+  IconData _getNotificationIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'success':
+        return Icons.check_circle;
+      case 'error':
+        return Icons.error;
+      case 'warning':
+        return Icons.warning;
+      case 'info':
+      default:
+        return Icons.info;
+    }
   }
 
   Future<void> _fetchCurrentUserId() async {
@@ -192,10 +261,10 @@ class _ManageScreenState extends State<_ManageScreen> {
               child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
+                  children: [
                       // Move Add/Edit Food text to top
                       Text(isEdit ? 'Edit Food' : 'Add Food', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppConstants.primaryColor)),
                       const SizedBox(height: 18),
@@ -220,15 +289,15 @@ class _ManageScreenState extends State<_ManageScreen> {
                             bottom: 6,
                             right: 6,
                             child: InkWell(
-                              onTap: () async {
-                                final ImagePicker picker = ImagePicker();
-                                final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                                if (image != null) {
-                                  setStateDialog(() {
-                                    _pickedImage = image;
-                                  });
-                                }
-                              },
+                      onTap: () async {
+                        final ImagePicker picker = ImagePicker();
+                        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                        if (image != null) {
+                          setStateDialog(() {
+                            _pickedImage = image;
+                          });
+                        }
+                      },
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: AppConstants.primaryColor,
@@ -238,10 +307,10 @@ class _ManageScreenState extends State<_ManageScreen> {
                                 padding: const EdgeInsets.all(8),
                                 child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
+                                ),
+                    ),
+                  ],
+                ),
                       const SizedBox(height: 24),
                       // Food name and price fields with same width
                       Row(
@@ -316,7 +385,7 @@ class _ManageScreenState extends State<_ManageScreen> {
                                 return Colors.indigo.withOpacity(0.1);
                             }
                           }
-                          
+
                           return DropdownMenuItem<String>(
                             value: cat['id'],
                             child: Container(
@@ -328,7 +397,7 @@ class _ManageScreenState extends State<_ManageScreen> {
                               child: Text(
                                 cat['name'] ?? '',
                                 style: TextStyle(
-                                  color: AppConstants.primaryColor, 
+                                  color: AppConstants.primaryColor,
                                   fontWeight: FontWeight.w500,
                                   fontSize: 14,
                                 ),
@@ -356,87 +425,82 @@ class _ManageScreenState extends State<_ManageScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
                             child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
-                          ),
+                ),
                           const SizedBox(width: 12),
-                          ElevatedButton(
+                ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppConstants.primaryColor,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                             ),
-                            onPressed: _isUploading
-                                ? null
-                                : () async {
-                                    final name = _nameController.text.trim();
-                                    final desc = _descController.text.trim();
-                                    final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
+                  onPressed: _isUploading
+                      ? null
+                      : () async {
+                          final name = _nameController.text.trim();
+                          final desc = _descController.text.trim();
+                          final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
                                     if (name.isEmpty || price <= 0 || selectedCategoryId.isEmpty) return;
-                                    final confirmed = await _showConfirmationDialog(
-                                      isEdit ? 'Update Food' : 'Add Food',
-                                      isEdit 
-                                        ? 'Are you sure you want to update "${food!['name']}"?'
-                                        : 'Are you sure you want to add "${name}" to your menu?',
-                                    );
-                                    if (!confirmed) return;
-                                    setState(() => _isUploading = true);
-                                    String? imageUrl = food?['image_url'];
-                                    if (_pickedImage != null) {
-                                      imageUrl = await _uploadImage(_pickedImage!);
-                                    }
-                                    try {
-                                      if (isEdit) {
-                                        await Supabase.instance.client
-                                            .from('foods')
-                                            .update({
-                                              'name': name,
-                                              'description': desc,
-                                              'price': price,
-                                              'image_url': imageUrl,
+                          final confirmed = await _showConfirmationDialog(
+                            isEdit ? 'Update Food' : 'Add Food',
+                            isEdit 
+                              ? 'Are you sure you want to update "${food!['name']}"?'
+                              : 'Are you sure you want to add "${name}" to your menu?',
+                          );
+                          if (!confirmed) return;
+                          setState(() => _isUploading = true);
+                          String? imageUrl = food?['image_url'];
+                          if (_pickedImage != null) {
+                            imageUrl = await _uploadImage(_pickedImage!);
+                          }
+                          try {
+                            if (isEdit) {
+                              await Supabase.instance.client
+                                  .from('foods')
+                                  .update({
+                                    'name': name,
+                                    'description': desc,
+                                    'price': price,
+                                    'image_url': imageUrl,
                                               'category_id': selectedCategoryId,
-                                            })
-                                            .eq('id', food!['id']);
-                                        setState(() => _isUploading = false);
-                                        Navigator.pop(context, true);
-                                        _fetchFoods();
-                                      } else {
-                                        await Supabase.instance.client
-                                            .from('foods')
-                                            .insert({
-                                              'name': name,
-                                              'description': desc,
-                                              'price': price,
-                                              'image_url': imageUrl,
-                                              'created_by': _userId,
+                                  })
+                                  .eq('id', food!['id']);
+                              setState(() => _isUploading = false);
+                              Navigator.pop(context, true);
+                              _fetchFoods();
+                            } else {
+                              await Supabase.instance.client
+                                  .from('foods')
+                                  .insert({
+                                    'name': name,
+                                    'description': desc,
+                                    'price': price,
+                                    'image_url': imageUrl,
+                                    'created_by': _userId,
                                               'category_id': selectedCategoryId,
-                                            });
-                                        setState(() => _isUploading = false);
-                                        Navigator.pop(context, true);
-                                        _fetchFoods();
-                                      }
-                                    } catch (e) {
-                                      setState(() => _isUploading = false);
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Error ${isEdit ? 'updating' : 'adding'} food: $e'),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  },
-                            child: _isUploading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
+                                  });
+                              setState(() => _isUploading = false);
+                              Navigator.pop(context, true);
+                              _fetchFoods();
+                            }
+                          } catch (e) {
+                            setState(() => _isUploading = false);
+                            if (context.mounted) {
+                                        _showFloatingNotification('Error ${isEdit ? 'updating' : 'adding'} food: $e', type: 'error');
+                            }
+                          }
+                        },
+                  child: _isUploading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
                                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                  )
+                        )
                                 : Text(isEdit ? 'Save' : 'Add', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
+                ),
+              ],
                       ),
                     ],
                   ),
@@ -497,38 +561,15 @@ class _ManageScreenState extends State<_ManageScreen> {
       _fetchFoods();
       
       // Show success message
-      if (mounted) {
-        _scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(
-            content: Text('"$foodName" deleted successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+      if (context.mounted) {
+        _showFloatingNotification('"$foodName" deleted successfully!', type: 'success');
       }
     } catch (e) {
-      if (mounted) {
-        _scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(
-            content: Text('Error deleting food: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      if (context.mounted) {
+        _showFloatingNotification('Error deleting food: $e', type: 'error');
       }
     }
   }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _descController.dispose();
-    _priceController.dispose();
-    super.dispose();
-  }
-
-  // Search and filter state
-  final TextEditingController _searchController = TextEditingController();
-  String _selectedSort = 'All';
-  final List<String> _sortOptions = ['All', 'Best Seller', 'Recent', 'Popular', 'Categories'];
 
   @override
   Widget build(BuildContext context) {
@@ -544,431 +585,458 @@ class _ManageScreenState extends State<_ManageScreen> {
       {'id': 'all', 'name': 'All'},
       ...reorderedCategories
     ];
-    return ScaffoldMessenger(
+    
+    return Stack(
+      children: [
+        ScaffoldMessenger(
       key: _scaffoldMessengerKey,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Manage Foods'),
-          backgroundColor: AppConstants.primaryColor,
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
+            appBar: AppBar(
+              title: const Text('Manage Foods'),
+              backgroundColor: AppConstants.primaryColor,
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
         body: _isLoadingFoods
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
                 onRefresh: () async => _fetchFoods(),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return Column(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return Column(
+                  children: [
+                            // --- Search & Filter Container ---
+                            Column(
                       children: [
-                        // --- Search & Filter Container ---
-                        Column(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: AppConstants.primaryColor,
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(0),
-                                  topRight: Radius.circular(0),
-                                  bottomLeft: Radius.circular(32),
-                                  bottomRight: Radius.circular(32),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.10),
-                                    blurRadius: 24,
-                                    spreadRadius: 0,
-                                    offset: const Offset(0, 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: AppConstants.primaryColor,
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(0),
+                                      topRight: Radius.circular(0),
+                                      bottomLeft: Radius.circular(32),
+                                      bottomRight: Radius.circular(32),
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.10),
+                                        blurRadius: 24,
+                                        spreadRadius: 0,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(16, 16, 16, 22),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    // Search bar with button inside
-                                    Expanded(
-                                      flex: 3,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: TextField(
-                                                controller: _searchController,
-                                                decoration: InputDecoration(
-                                                  hintText: 'Search food...',
-                                                  border: InputBorder.none,
-                                                  isCollapsed: false,
-                                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                                                  prefixIcon: const Icon(Icons.search, color: AppConstants.primaryColor),
-                                                ),
-                                                textAlignVertical: TextAlignVertical.center,
-                                                onSubmitted: (value) {
-                                                  _applySearchAndSort();
-                                                },
-                                              ),
-                                            ),
-                                            // Search button with inner border
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: AppConstants.primaryColor,
-                                                borderRadius: const BorderRadius.only(
-                                                  topRight: Radius.circular(12),
-                                                  bottomRight: Radius.circular(12),
-                                                ),
-                                                border: Border.all(
-                                                  color: Colors.white,
-                                                  width: 2,
-                                                ),
-                                              ),
-                                              child: Material(
-                                                color: Colors.transparent,
-                                                borderRadius: const BorderRadius.only(
-                                                  topRight: Radius.circular(12),
-                                                  bottomRight: Radius.circular(12),
-                                                ),
-                                                child: InkWell(
-                                                  borderRadius: const BorderRadius.only(
-                                                    topRight: Radius.circular(12),
-                                                    bottomRight: Radius.circular(12),
-                                                  ),
-                                                  onTap: _applySearchAndSort,
-                                                  child: Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                                    child: const Icon(Icons.arrow_forward, color: Colors.white),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    // Sort filter as button with dropdown inside
-                                    Expanded(
-                                      flex: 2,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: AppConstants.primaryColor.withOpacity(0.2)),
-                                        ),
-                                        child: DropdownButtonHideUnderline(
-                                          child: ButtonTheme(
-                                            alignedDropdown: true,
-                                            child: DropdownButton<String>(
-                                              value: _selectedSort,
-                                              isExpanded: true,
-                                              icon: const Icon(Icons.arrow_drop_down, color: AppConstants.primaryColor),
-                                              style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600),
-                                              dropdownColor: Colors.white,
-                                              borderRadius: BorderRadius.circular(12),
-                                              items: _sortOptions.map((option) {
-                                                return DropdownMenuItem<String>(
-                                                  value: option,
-                                                  child: Text(option, style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600)),
-                                                );
-                                              }).toList(),
-                                              onChanged: (value) {
-                                                if (value != null) {
-                                                  setState(() {
-                                                    _selectedSort = value;
-                                                  });
-                                                  _applySearchAndSort();
-                                                }
-                                              },
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 4), // 8px gap below the container
-                          ],
-                        ),
-                        // --- Food List and Title ---
-                        Expanded(
-                          child: ListView(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                            children: [
-                              // --- Category Horizontal Scroll ---
-                              const SizedBox(height: 8), // 2 spaces margin above
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: SizedBox(
-                                  height: 48,
-                                  child: ListView.separated(
-                                    scrollDirection: Axis.horizontal,
-                                    padding: const EdgeInsets.symmetric(horizontal: 0),
-                                    itemCount: categories.length,
-                                    separatorBuilder: (context, idx) => const SizedBox(width: 8),
-                                    itemBuilder: (context, idx) {
-                                      final cat = categories[idx];
-                                      final bool isSelected = cat['id'] == _selectedCategoryId;
-                                      return Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          borderRadius: BorderRadius.circular(24),
-                                          onTap: () {
-                                            setState(() {
-                                              _selectedCategoryId = cat['id'];
-                                              _applySearchAndSort();
-                                            });
-                                          },
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 22),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        // Search bar with button inside
+                                        Expanded(
+                                          flex: 3,
                                           child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                                             decoration: BoxDecoration(
-                                              color: isSelected ? AppConstants.primaryColor : Colors.white,
-                                              borderRadius: BorderRadius.circular(24),
-                                              border: Border.all(color: AppConstants.primaryColor.withOpacity(0.15)),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black.withOpacity(0.04),
-                                                  blurRadius: 4,
-                                                  offset: const Offset(0, 2),
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  child: TextField(
+                                                    controller: _searchController,
+                                                    decoration: InputDecoration(
+                                                      hintText: 'Search food...',
+                                                      border: InputBorder.none,
+                                                      isCollapsed: false,
+                                                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                                                      prefixIcon: const Icon(Icons.search, color: AppConstants.primaryColor),
+                                                    ),
+                                                    textAlignVertical: TextAlignVertical.center,
+                                                    onSubmitted: (value) {
+                                                      _applySearchAndSort();
+                                                    },
+                                                  ),
+                                                ),
+                                                // Search button with inner border
+                                                Container(
+                                                  decoration: BoxDecoration(
+                                                    color: AppConstants.primaryColor,
+                                                    borderRadius: const BorderRadius.only(
+                                                      topRight: Radius.circular(12),
+                                                      bottomRight: Radius.circular(12),
+                                                    ),
+                                                    border: Border.all(
+                                                      color: Colors.white,
+                                                      width: 2,
+                                                    ),
+                                                  ),
+                                                  child: Material(
+                                                    color: Colors.transparent,
+                                                    borderRadius: const BorderRadius.only(
+                                                      topRight: Radius.circular(12),
+                                                      bottomRight: Radius.circular(12),
+                                                    ),
+                                                    child: InkWell(
+                                                      borderRadius: const BorderRadius.only(
+                                                        topRight: Radius.circular(12),
+                                                        bottomRight: Radius.circular(12),
+                                                      ),
+                                                      onTap: _applySearchAndSort,
+                                                      child: Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                                        child: const Icon(Icons.arrow_forward, color: Colors.white),
+                                                      ),
+                                                    ),
+                                                  ),
                                                 ),
                                               ],
                                             ),
-                                            child: Center(
-                                              child: Text(
-                                                cat['name'],
-                                                style: TextStyle(
-                                                  color: isSelected ? Colors.white : AppConstants.primaryColor,
-                                                  fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        // Sort filter as button with dropdown inside
+                                        Expanded(
+                                          flex: 2,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(12),
+                                              border: Border.all(color: AppConstants.primaryColor.withOpacity(0.2)),
+                                            ),
+                                            child: DropdownButtonHideUnderline(
+                                              child: ButtonTheme(
+                                                alignedDropdown: true,
+                                                child: DropdownButton<String>(
+                                                  value: _selectedSort,
+                                                  isExpanded: true,
+                                                  icon: const Icon(Icons.arrow_drop_down, color: AppConstants.primaryColor),
+                                                  style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600),
+                                                  dropdownColor: Colors.white,
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  items: _sortOptions.map((option) {
+                                                    return DropdownMenuItem<String>(
+                                                      value: option,
+                                                      child: Text(option, style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600)),
+                                                    );
+                                                  }).toList(),
+                                                  onChanged: (value) {
+                                                    if (value != null) {
+                                                      setState(() {
+                                                        _selectedSort = value;
+                                                      });
+                                                      _applySearchAndSort();
+                                                    }
+                                                  },
                                                 ),
-                                                textAlign: TextAlign.center,
                                               ),
                                             ),
                                           ),
                                         ),
-                                      );
-                                    },
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                const SizedBox(height: 4), // 8px gap below the container
+                              ],
+                            ),
+                            // --- Food List and Title ---
+                            Expanded(
+                              child: ListView(
+                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                                 children: [
-                                  const Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              ..._filteredFoods.map((food) => Container(
-                                    margin: const EdgeInsets.only(bottom: 16),
-                                    child: Material(
-                                      elevation: 4,
-                                      borderRadius: BorderRadius.circular(20),
-                                      color: Colors.white,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16.0),
-                                        child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            // Image left, vertically centered, larger size
-                                            Container(
-                                              width: 92,
-                                              height: 92,
-                                              alignment: Alignment.center,
-                                              child: ClipRRect(
-                                                borderRadius: BorderRadius.circular(16),
-                                                child: food['image_url'] != null
-                                                    ? Image.network(food['image_url'], width: 92, height: 92, fit: BoxFit.cover)
-                                                    : Container(
-                                                        width: 92,
-                                                        height: 92,
-                                                        color: Colors.grey[200],
-                                                        child: const Icon(Icons.fastfood, size: 44, color: Colors.grey),
-                                                      ),
+                                  // --- Category Horizontal Scroll ---
+                                  const SizedBox(height: 8), // 2 spaces margin above
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: SizedBox(
+                                      height: 48,
+                                      child: ListView.separated(
+                                        scrollDirection: Axis.horizontal,
+                                        padding: const EdgeInsets.symmetric(horizontal: 0),
+                                        itemCount: categories.length,
+                                        separatorBuilder: (context, idx) => const SizedBox(width: 8),
+                                        itemBuilder: (context, idx) {
+                                          final cat = categories[idx];
+                                          final bool isSelected = cat['id'] == _selectedCategoryId;
+                                          return Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              borderRadius: BorderRadius.circular(24),
+                                              onTap: () {
+                                                setState(() {
+                                                  _selectedCategoryId = cat['id'];
+                                                  _applySearchAndSort();
+                                                });
+                                              },
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                                decoration: BoxDecoration(
+                                                  color: isSelected ? AppConstants.primaryColor : Colors.white,
+                                                  borderRadius: BorderRadius.circular(24),
+                                                  border: Border.all(color: AppConstants.primaryColor.withOpacity(0.15)),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black.withOpacity(0.04),
+                                                      blurRadius: 4,
+                                                      offset: const Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    cat['name'],
+                                                    style: TextStyle(
+                                                      color: isSelected ? Colors.white : AppConstants.primaryColor,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ),
                                               ),
                                             ),
-                                            const SizedBox(width: 18),
-                                            // Main info column
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  // Grouped container for food name, 3-dot menu, and details
-                                                  Container(
-                                                    child: Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Row(
-                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                                  ..._filteredFoods.map((food) => Container(
+                                        margin: const EdgeInsets.only(bottom: 16),
+                                        child: Material(
+                                          elevation: 4,
+                                          borderRadius: BorderRadius.circular(20),
+                                          color: Colors.white,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(16.0),
+                                            child: Row(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                                // Image left, vertically centered, larger size
+                                                Container(
+                                                  width: 92,
+                                                  height: 92,
+                                                  alignment: Alignment.center,
+                                                  child: ClipRRect(
+                                                    borderRadius: BorderRadius.circular(16),
+                                                    child: food['image_url'] != null
+                                                        ? Image.network(food['image_url'], width: 92, height: 92, fit: BoxFit.cover)
+                                                        : Container(
+                                                            width: 92,
+                                                            height: 92,
+                                                            color: Colors.grey[200],
+                                                            child: const Icon(Icons.fastfood, size: 44, color: Colors.grey),
+                                                          ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 18),
+                                                // Main info column
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      // Grouped container for food name, 3-dot menu, and details
+                                                      Container(
+                                                        child: Column(
                                                           crossAxisAlignment: CrossAxisAlignment.start,
                                                           children: [
-                                                            Expanded(
-                                                              child: Column(
-                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                children: [
-                                                                  Text(
-                                                                    food['name'] ?? '',
-                                                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                                                    maxLines: 1,
-                                                                    overflow: TextOverflow.ellipsis,
-                                                                  ),
-                                                                  const SizedBox(height: 1),
-                                                                  // Details in one line, ellipsis if overflow
-                                                                  Text(
-                                                                    food['description'] ?? '',
-                                                                    style: const TextStyle(fontSize: 14, color: Colors.black87),
-                                                                    maxLines: 1,
-                                                                    overflow: TextOverflow.ellipsis,
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                            PopupMenuButton<String>(
-                                                              icon: const Icon(Icons.more_vert, color: Colors.grey),
-                                                              onSelected: (value) async {
-                                                                if (value == 'edit') {
-                                                                  final result = await _showAddOrEditFoodDialog(food: food);
-                                                                  if (result == true && mounted) {
-                                                                    _scaffoldMessengerKey.currentState?.showSnackBar(
-                                                                      SnackBar(
-                                                                        content: Text('"${food['name']}" updated successfully!'),
-                                                                        backgroundColor: Colors.green,
+                                                            Row(
+                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              children: [
+                                                                Expanded(
+                                                                  child: Column(
+                                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                                    children: [
+                                                                      Text(
+                                                                        food['name'] ?? '',
+                                                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                                                        maxLines: 1,
+                                                                        overflow: TextOverflow.ellipsis,
                                                                       ),
-                                                                    );
-                                                                  }
-                                                                } else if (value == 'delete') {
-                                                                  _deleteFood(food['id']);
-                                                                }
-                                                              },
-                                                              itemBuilder: (context) => [
-                                                                const PopupMenuItem(
-                                                                  value: 'edit',
-                                                                  child: ListTile(
-                                                                    leading: Icon(Icons.edit, color: Colors.blue),
-                                                                    title: Text('Edit'),
+                                                                      const SizedBox(height: 1),
+                                                                      // Details in one line, ellipsis if overflow
+                                                                      Text(
+                                                                        food['description'] ?? '',
+                                                                        style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                                                        maxLines: 1,
+                                                                        overflow: TextOverflow.ellipsis,
+                                                                      ),
+                                                                    ],
                                                                   ),
                                                                 ),
-                                                                const PopupMenuItem(
-                                                                  value: 'delete',
-                                                                  child: ListTile(
-                                                                    leading: Icon(Icons.delete, color: Colors.red),
-                                                                    title: Text('Delete'),
-                                                                  ),
+                                                                PopupMenuButton<String>(
+                                                                  icon: const Icon(Icons.more_vert, color: Colors.grey),
+                                                                  onSelected: (value) async {
+                                                                    if (value == 'edit') {
+                                    final result = await _showAddOrEditFoodDialog(food: food);
+                                    if (result == true && mounted) {
+                                                                        _showFloatingNotification('"${food['name']}" updated successfully!', type: 'success');
+                                                                      }
+                                                                    } else if (value == 'delete') {
+                                                                      _deleteFood(food['id']);
+                                                                    }
+                                                                  },
+                                                                  itemBuilder: (context) => [
+                                                                    const PopupMenuItem(
+                                                                      value: 'edit',
+                                                                      child: ListTile(
+                                                                        leading: Icon(Icons.edit, color: Colors.blue),
+                                                                        title: Text('Edit'),
+                                                                      ),
+                                                                    ),
+                                                                    const PopupMenuItem(
+                                                                      value: 'delete',
+                                                                      child: ListTile(
+                                                                        leading: Icon(Icons.delete, color: Colors.red),
+                                                                        title: Text('Delete'),
+                                                                      ),
+                                                                    ),
+                                                                  ],
                                                                 ),
                                                               ],
                                                             ),
+                                                            const SizedBox(height: 2),
                                                           ],
                                                         ),
-                                                        const SizedBox(height: 2),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 8),
-                                                  // Category and price row beneath the grouped container
-                                                  Row(
-                                                    children: [
-                                                      Builder(
-                                                        builder: (context) {
-                                                          final category = _categories.firstWhere(
-                                                            (cat) => cat['id'] == food['category_id'],
-                                                            orElse: () => {'name': 'Uncategorized'},
-                                                          );
-                                                          Color getCategoryColor(String categoryName) {
-                                                            switch (categoryName.toLowerCase()) {
-                                                              case 'main course':
-                                                              case 'main':
-                                                                return Colors.red.withOpacity(0.1);
-                                                              case 'beverage':
-                                                              case 'drink':
-                                                                return Colors.blue.withOpacity(0.1);
-                                                              case 'seafood':
-                                                                return Colors.cyan.withOpacity(0.1);
-                                                              case 'grilled & bbq':
-                                                              case 'grilled':
-                                                              case 'bbq':
-                                                                return Colors.orange.withOpacity(0.1);
-                                                              case 'pastries':
-                                                              case 'pastry':
-                                                                return Colors.purple.withOpacity(0.1);
-                                                              case 'desserts':
-                                                              case 'dessert':
-                                                                return Colors.yellow.withOpacity(0.1);
-                                                              case 'snacks':
-                                                              case 'snack':
-                                                                return Colors.green.withOpacity(0.1);
-                                                              case 'etc':
-                                                              case 'other':
-                                                                return Colors.grey.withOpacity(0.1);
-                                                              default:
-                                                                return Colors.indigo.withOpacity(0.1);
-                                                            }
-                                                          }
-                                                          return Container(
-                                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                            decoration: BoxDecoration(
-                                                              color: getCategoryColor(category['name'] ?? ''),
-                                                              borderRadius: BorderRadius.circular(12),
-                                                            ),
-                                                            child: Text(
-                                                              category['name'],
-                                                              style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600, fontSize: 12),
-                                                            ),
-                                                          );
-                                                        },
                                                       ),
-                                                      const Spacer(),
-                                                      Text(
-                                                        'SAR ${food['price']?.toStringAsFixed(2) ?? ''}',
-                                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppConstants.primaryColor),
+                                                      const SizedBox(height: 8),
+                                                      // Category and price row beneath the grouped container
+                                                      Row(
+                                                        children: [
+                                                          Builder(
+                                                            builder: (context) {
+                                                              final category = _categories.firstWhere(
+                                                                (cat) => cat['id'] == food['category_id'],
+                                                                orElse: () => {'name': 'Uncategorized'},
+                                                              );
+                                                              Color getCategoryColor(String categoryName) {
+                                                                switch (categoryName.toLowerCase()) {
+                                                                  case 'main course':
+                                                                  case 'main':
+                                                                    return Colors.red.withOpacity(0.1);
+                                                                  case 'beverage':
+                                                                  case 'drink':
+                                                                    return Colors.blue.withOpacity(0.1);
+                                                                  case 'seafood':
+                                                                    return Colors.cyan.withOpacity(0.1);
+                                                                  case 'grilled & bbq':
+                                                                  case 'grilled':
+                                                                  case 'bbq':
+                                                                    return Colors.orange.withOpacity(0.1);
+                                                                  case 'pastries':
+                                                                  case 'pastry':
+                                                                    return Colors.purple.withOpacity(0.1);
+                                                                  case 'desserts':
+                                                                  case 'dessert':
+                                                                    return Colors.yellow.withOpacity(0.1);
+                                                                  case 'snacks':
+                                                                  case 'snack':
+                                                                    return Colors.green.withOpacity(0.1);
+                                                                  case 'etc':
+                                                                  case 'other':
+                                                                    return Colors.grey.withOpacity(0.1);
+                                                                  default:
+                                                                    return Colors.indigo.withOpacity(0.1);
+                                                                }
+                                                              }
+                                                              return Container(
+                                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                                decoration: BoxDecoration(
+                                                                  color: getCategoryColor(category['name'] ?? ''),
+                                                                  borderRadius: BorderRadius.circular(12),
+                                                                ),
+                                                                child: Text(
+                                                                  category['name'],
+                                                                  style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600, fontSize: 12),
+                                                                ),
+                                                              );
+                                                            },
+                                                          ),
+                                                          const Spacer(),
+                                                          Text(
+                                                            'SAR ${food['price']?.toStringAsFixed(2) ?? ''}',
+                                                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppConstants.primaryColor),
+                                                          ),
+                                                        ],
                                                       ),
                                                     ],
                                                   ),
-                                                ],
-                                              ),
+                                                ),
+                                              ],
                                             ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  )),
-                              if (_filteredFoods.isEmpty)
-                                const Center(child: Text('No foods found. Add your first food!')),
-                            ],
+                            ),
                           ),
-                        ),
-                      ],
-                    );
-                  },
+                        )),
+                                  if (_filteredFoods.isEmpty)
+                      const Center(child: Text('No foods found. Add your first food!')),
+                  ],
                 ),
               ),
-        floatingActionButton: Padding(
-          padding: const EdgeInsets.only(bottom: 86.0), // Move FAB above the bottom nav
-          child: FloatingActionButton(
-            onPressed: () async {
-              final result = await _showAddOrEditFoodDialog();
-              if (result == true && mounted) {
-                _scaffoldMessengerKey.currentState?.showSnackBar(
-                  const SnackBar(
-                    content: Text('Food added successfully!'),
-                    backgroundColor: Colors.green,
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                );
-              }
-            },
-            backgroundColor: AppConstants.primaryColor,
-            child: const Icon(Icons.add, color: Colors.white),
-            tooltip: 'Add Food',
+            floatingActionButton: Padding(
+              padding: const EdgeInsets.only(bottom: 86.0), // Move FAB above the bottom nav
+              child: FloatingActionButton(
+                onPressed: () async {
+                  final result = await _showAddOrEditFoodDialog();
+                  if (result == true && mounted) {
+                    _showFloatingNotification('Food added successfully!', type: 'success');
+                  }
+                },
+        backgroundColor: AppConstants.primaryColor,
+                child: const Icon(Icons.add, color: Colors.white),
+                tooltip: 'Add Food',
+              ),
+            ),
+            floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
           ),
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+        // Floating notification overlay
+        if (_showNotification)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 10), // Add top padding
+              color: _getNotificationColor(_notificationType),
+              child: Row(
+          children: [
+                  Icon(_getNotificationIcon(_notificationType), color: Colors.white, size: 24),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _notificationMessage,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _showNotification = false;
+                      });
+                    },
+                    icon: const Icon(Icons.close, color: Colors.white, size: 24),
+            ),
+          ],
+        ),
       ),
+          ),
+      ],
     );
   }
 }
@@ -1033,13 +1101,69 @@ class _SettingsScreenState extends State<_SettingsScreen> {
   String _selectedRole = 'rider';
   bool _isLoading = false;
 
+  // Floating notification state
+  bool _showNotification = false;
+  String _notificationMessage = '';
+  String _notificationType = 'info';
+  Timer? _notificationTimer;
+
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _contactController.dispose();
+    _notificationTimer?.cancel();
     super.dispose();
+  }
+
+  // Show floating notification
+  void _showFloatingNotification(String message, {String type = 'info'}) {
+    setState(() {
+      _notificationMessage = message;
+      _notificationType = type;
+      _showNotification = true;
+    });
+    
+    // Auto-dismiss after 3 seconds
+    _notificationTimer?.cancel();
+    _notificationTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _showNotification = false;
+        });
+      }
+    });
+  }
+
+  // Get notification color based on type
+  Color _getNotificationColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'success':
+        return Colors.green;
+      case 'error':
+        return Colors.red;
+      case 'warning':
+        return Colors.orange;
+      case 'info':
+      default:
+        return Colors.blue;
+    }
+  }
+ 
+  // Get notification icon based on type
+  IconData _getNotificationIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'success':
+        return Icons.check_circle;
+      case 'error':
+        return Icons.error;
+      case 'warning':
+        return Icons.warning;
+      case 'info':
+      default:
+        return Icons.info;
+    }
   }
 
   Future<void> _addUser() async {
@@ -1059,17 +1183,13 @@ class _SettingsScreenState extends State<_SettingsScreen> {
         'role': _selectedRole,
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User added successfully!'), backgroundColor: AppConstants.primaryColor),
-        );
+        _showFloatingNotification('User added successfully!', type: 'success');
         _formKey.currentState!.reset();
         _selectedRole = 'rider';
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error:  ${e.toString()}'), backgroundColor: Colors.red),
-        );
+        _showFloatingNotification('Error:  ${e.toString()}', type: 'error');
       }
     } finally {
       if (mounted) setState(() { _isLoading = false; });
@@ -1109,252 +1229,256 @@ class _SettingsScreenState extends State<_SettingsScreen> {
           MaterialPageRoute(builder: (context) => const LoginScreen()),
           (route) => false,
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Logged out successfully!'),
-            backgroundColor: AppConstants.primaryColor,
-          ),
-        );
+        _showFloatingNotification('Logged out successfully!', type: 'success');
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error logging out: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showFloatingNotification('Error logging out: ${e.toString()}', type: 'error');
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Stack(
+      children: [
+        Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
         backgroundColor: AppConstants.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Admin Settings',
-              style: AppConstants.headingStyle,
-            ),
-            const SizedBox(height: 24),
-            // Add User Form
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Admin Settings',
+                style: AppConstants.headingStyle,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Colored header with icon
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppConstants.primaryColor,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
-                      ),
-                    ),
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                    child: Row(
-                      children: [
-                        Icon(Icons.person_add, color: Colors.white),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Add User (Rider/Restaurant)',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              const SizedBox(height: 24),
+              // Add User Form
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Colored header with icon
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppConstants.primaryColor,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
                         ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      ),
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      child: Row(
                         children: [
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _nameController,
-                            decoration: InputDecoration(
-                              labelText: 'Name',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                              ),
-                              prefixIcon: const Icon(Icons.person),
-                            ),
-                            validator: (value) => value == null || value.isEmpty ? 'Enter name' : null,
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _emailController,
-                            decoration: InputDecoration(
-                              labelText: 'Email',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                              ),
-                              prefixIcon: const Icon(Icons.email),
-                            ),
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) return 'Enter email';
-                              final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-                              if (!emailRegex.hasMatch(value)) return 'Enter valid email';
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _passwordController,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                              ),
-                              prefixIcon: const Icon(Icons.lock),
-                            ),
-                            obscureText: true,
-                            validator: (value) => value == null || value.isEmpty ? 'Enter password' : null,
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _contactController,
-                            decoration: InputDecoration(
-                              labelText: 'Contact',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                              ),
-                              prefixIcon: const Icon(Icons.phone),
-                            ),
-                            validator: (value) => value == null || value.isEmpty ? 'Enter contact' : null,
-                          ),
-                          const SizedBox(height: 16),
-                          DropdownButtonFormField<String>(
-                            value: _selectedRole,
-                            items: const [
-                              DropdownMenuItem(value: 'rider', child: Text('Rider')),
-                              DropdownMenuItem(value: 'restaurant', child: Text('Restaurant')),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) setState(() { _selectedRole = value; });
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'Role',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
-                              ),
-                              prefixIcon: const Icon(Icons.group),
-                            ),
-                            dropdownColor: Colors.white,
-                          ),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _isLoading ? null : _addUser,
-                              style: AppConstants.primaryButton,
-                              icon: _isLoading
-                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                  : const Icon(Icons.person_add, color: Colors.white),
-                              label: Text(
-                                _isLoading ? 'Adding...' : 'Add User',
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
-                            ),
+                          Icon(Icons.person_add, color: Colors.white),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Add User (Rider/Restaurant)',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            // Settings Card
-            Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: Icon(Icons.admin_panel_settings, color: AppConstants.primaryColor),
-                    title: Text('Admin Panel', style: TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text('Manage system settings'),
-                    trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              Icon(Icons.info, color: Colors.white),
-                              const SizedBox(width: 8),
-                              Text('Admin Panel coming soon!'),
-                            ],
-                          ),
-                          backgroundColor: AppConstants.primaryColor,
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _nameController,
+                              decoration: InputDecoration(
+                                labelText: 'Name',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                                ),
+                                prefixIcon: const Icon(Icons.person),
+                              ),
+                              validator: (value) => value == null || value.isEmpty ? 'Enter name' : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _emailController,
+                              decoration: InputDecoration(
+                                labelText: 'Email',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                                ),
+                                prefixIcon: const Icon(Icons.email),
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) return 'Enter email';
+                                final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                                if (!emailRegex.hasMatch(value)) return 'Enter valid email';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _passwordController,
+                              decoration: InputDecoration(
+                                labelText: 'Password',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                                ),
+                                prefixIcon: const Icon(Icons.lock),
+                              ),
+                              obscureText: true,
+                              validator: (value) => value == null || value.isEmpty ? 'Enter password' : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _contactController,
+                              decoration: InputDecoration(
+                                labelText: 'Contact',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                                ),
+                                prefixIcon: const Icon(Icons.phone),
+                              ),
+                              validator: (value) => value == null || value.isEmpty ? 'Enter contact' : null,
+                            ),
+                            const SizedBox(height: 16),
+                            DropdownButtonFormField<String>(
+                              value: _selectedRole,
+                              items: const [
+                                DropdownMenuItem(value: 'rider', child: Text('Rider')),
+                                DropdownMenuItem(value: 'restaurant', child: Text('Restaurant')),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) setState(() { _selectedRole = value; });
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Role',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: AppConstants.primaryColor, width: 2),
+                                ),
+                                prefixIcon: const Icon(Icons.group),
+                              ),
+                              dropdownColor: Colors.white,
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _isLoading ? null : _addUser,
+                                style: AppConstants.primaryButton,
+                                icon: _isLoading
+                                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                    : const Icon(Icons.person_add, color: Colors.white),
+                                label: Text(
+                                  _isLoading ? 'Adding...' : 'Add User',
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(Icons.security, color: AppConstants.primaryColor),
-                    title: Text('Security', style: TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text('Manage security settings'),
-                    trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              Icon(Icons.info, color: Colors.white),
-                              const SizedBox(width: 8),
-                              Text('Security settings coming soon!'),
-                            ],
-                          ),
-                          backgroundColor: AppConstants.primaryColor,
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(Icons.logout, color: Colors.red),
-                    title: Text('Logout', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
-                    subtitle: Text('Sign out of admin account'),
-                    trailing: const Icon(Icons.arrow_forward_ios, color: Colors.red),
-                    onTap: () => _showLogoutConfirmation(context),
-                  ),
-                ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 32),
+              // Settings Card
+              Card(
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: Icon(Icons.admin_panel_settings, color: AppConstants.primaryColor),
+                      title: Text('Admin Panel', style: TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: Text('Manage system settings'),
+                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                      onTap: () {
+                          _showFloatingNotification('Admin Panel coming soon!', type: 'info');
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: Icon(Icons.security, color: AppConstants.primaryColor),
+                      title: Text('Security', style: TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: Text('Manage security settings'),
+                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                      onTap: () {
+                          _showFloatingNotification('Security settings coming soon!', type: 'info');
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: Icon(Icons.logout, color: Colors.red),
+                      title: Text('Logout', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+                      subtitle: Text('Sign out of admin account'),
+                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.red),
+                      onTap: () => _showLogoutConfirmation(context),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
+        // Floating notification
+        if (_showNotification)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 10), // Add top padding
+              color: _getNotificationColor(_notificationType),
+              child: Row(
+                children: [
+                  Icon(_getNotificationIcon(_notificationType), color: Colors.white, size: 24),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _notificationMessage,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _showNotification = false;
+                      });
+                    },
+                    icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -1388,53 +1512,53 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
               minimum: const EdgeInsets.all(8),
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(25),
-                  child: BottomNavigationBar(
-                    currentIndex: _currentIndex,
-                    onTap: (index) {
-                      setState(() {
-                        _currentIndex = index;
-                      });
-                    },
-                    type: BottomNavigationBarType.fixed,
-                    backgroundColor: Colors.white,
-                    selectedItemColor: AppConstants.primaryColor,
-                    unselectedItemColor: Colors.grey,
-                    selectedLabelStyle: const TextStyle(fontSize: 0),
-                    unselectedLabelStyle: const TextStyle(fontSize: 0),
-                    elevation: 0,
-                    items: const [
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.home),
-                        label: '',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.assessment),
-                        label: '',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.assignment), // Clipboard icon for Manage
-                        label: '',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.settings),
-                        label: '',
-                      ),
-                    ],
-                  ),
-                ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(25),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.white,
+            selectedItemColor: AppConstants.primaryColor,
+            unselectedItemColor: Colors.grey,
+            selectedLabelStyle: const TextStyle(fontSize: 0),
+            unselectedLabelStyle: const TextStyle(fontSize: 0),
+            elevation: 0,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.assessment),
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.assignment), // Clipboard icon for Manage
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings),
+                label: '',
+              ),
+            ],
+          ),
+        ),
               ),
             ),
           ),
@@ -1442,4 +1566,4 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
       ),
     );
   }
-}
+} 
