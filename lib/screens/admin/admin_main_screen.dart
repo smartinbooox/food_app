@@ -1025,7 +1025,7 @@ class _ManageScreenState extends State<_ManageScreen> {
                                                 },
                                                 child: const Text(
                                                   'See more',
-                                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppConstants.primaryColor),
+                                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: AppConstants.primaryColor),
                                                 ),
                                               ),
                                             ],
@@ -1066,7 +1066,7 @@ class _ManageScreenState extends State<_ManageScreen> {
                                               },
                                               child: const Text(
                                                 'See more',
-                                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppConstants.primaryColor),
+                                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: AppConstants.primaryColor),
                                               ),
                                             ),
                                           ],
