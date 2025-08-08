@@ -17,11 +17,21 @@ class _FoodListScreenState extends State<FoodListScreen> {
   List<Map<String, dynamic>> _foods = [];
   List<Map<String, dynamic>> _categories = [];
   String _selectedCategoryId = 'all';
+  final TextEditingController _searchController = TextEditingController();
+  String _selectedSort = 'All';
+  final List<String> _sortOptions = ['All', 'Best Seller', 'Recent', 'Popular', 'Categories'];
+  List<Map<String, dynamic>> _visibleFoods = [];
 
   @override
   void initState() {
     super.initState();
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -39,11 +49,82 @@ class _FoodListScreenState extends State<FoodListScreen> {
           .eq('created_by', widget.creatorId)
           .order('created_at', ascending: false);
       _foods = List<Map<String, dynamic>>.from(foodsResponse as List);
+
+      _applySearchAndSort();
     } catch (e) {
       // no-op
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _applySearchAndSort() {
+    String query = _searchController.text.trim().toLowerCase();
+    List<Map<String, dynamic>> filtered = _foods;
+
+    if (query.isNotEmpty) {
+      // Score foods based on relevance
+      filtered = filtered.map((food) {
+        final name = (food['name'] ?? '').toString().toLowerCase();
+        final desc = (food['description'] ?? '').toString().toLowerCase();
+        int score = 0;
+        if (name.startsWith(query)) {
+          score += 100;
+        } else if (name.contains(query)) {
+          score += 50;
+        }
+        if (desc.contains(query)) {
+          score += 20;
+        }
+        // Optionally, boost by sales/popularity if exists
+        score += (food['sales'] ?? 0) as int;
+        return {...food, '_searchScore': score};
+      }).toList();
+      // Only keep foods with score > 0
+      filtered = filtered.where((food) => food['_searchScore'] > 0).toList();
+      // Sort by score descending
+      filtered.sort((a, b) => (b['_searchScore'] as int).compareTo(a['_searchScore'] as int));
+    }
+
+    // Category filter
+    if (_selectedCategoryId != 'all') {
+      filtered = filtered.where((food) => food['category_id'] == _selectedCategoryId).toList();
+    }
+
+    // Sorting/filtering
+    switch (_selectedSort) {
+      case 'Best Seller':
+        filtered.sort((a, b) => ((b['sales'] ?? 0) as int).compareTo((a['sales'] ?? 0) as int));
+        break;
+      case 'Recent':
+        filtered.sort((a, b) {
+          final aDate = DateTime.tryParse(a['created_at']?.toString() ?? '') ?? DateTime(2000);
+          final bDate = DateTime.tryParse(b['created_at']?.toString() ?? '') ?? DateTime(2000);
+          return bDate.compareTo(aDate); // Newest first
+        });
+        break;
+      case 'Popular':
+        // If "popular" metric exists, otherwise fall back to sales
+        filtered.sort((a, b) => ((b['sales'] ?? 0) as int).compareTo((a['sales'] ?? 0) as int));
+        break;
+      case 'Categories':
+        filtered.sort((a, b) => ((a['category_id'] ?? '') as String).compareTo((b['category_id'] ?? '') as String));
+        break;
+      case 'All':
+      default:
+        break;
+    }
+
+    // Remove _searchScore before displaying
+    filtered = filtered.map((food) {
+      final copy = Map<String, dynamic>.from(food);
+      copy.remove('_searchScore');
+      return copy;
+    }).toList();
+
+    setState(() {
+      _visibleFoods = filtered;
+    });
   }
 
   Color _categoryColor(String categoryName) {
@@ -77,11 +158,6 @@ class _FoodListScreenState extends State<FoodListScreen> {
     }
   }
 
-  List<Map<String, dynamic>> get _filteredFoods {
-    if (_selectedCategoryId == 'all') return _foods;
-    return _foods.where((f) => f['category_id'] == _selectedCategoryId).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -113,6 +189,121 @@ class _FoodListScreenState extends State<FoodListScreen> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                     children: [
+                      // Search & Filter Container (clone)
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            children: [
+                              // Search bar with button inside
+                              SizedBox(
+                                height: 44,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: AppConstants.primaryColor.withOpacity(0.2)),
+                                        ),
+                                        child: TextField(
+                                          controller: _searchController,
+                                          decoration: const InputDecoration(
+                                            hintText: 'Search food...',
+                                            prefixIcon: Icon(Icons.search),
+                                            border: InputBorder.none,
+                                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                          ),
+                                          onSubmitted: (v) => _applySearchAndSort(),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    // Search button
+                                    InkWell(
+                                      onTap: _applySearchAndSort,
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        height: 44,
+                                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: AppConstants.primaryColor.withOpacity(0.2)),
+                                        ),
+                                        child: Row(
+                                          children: const [
+                                            Icon(Icons.search, color: AppConstants.primaryColor),
+                                            SizedBox(width: 6),
+                                            Text('Search', style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              // Sort dropdown
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: AppConstants.primaryColor.withOpacity(0.2)),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: ButtonTheme(
+                                          alignedDropdown: true,
+                                          child: DropdownButton<String>(
+                                            value: _selectedSort,
+                                            isExpanded: true,
+                                            icon: const Icon(Icons.arrow_drop_down, color: AppConstants.primaryColor),
+                                            style: const TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600),
+                                            dropdownColor: Colors.white,
+                                            borderRadius: BorderRadius.circular(12),
+                                            items: _sortOptions.map((option) {
+                                              return DropdownMenuItem<String>(
+                                                value: option,
+                                                child: Text(option, style: const TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600)),
+                                              );
+                                            }).toList(),
+                                            onChanged: (value) {
+                                              if (value != null) {
+                                                setState(() {
+                                                  _selectedSort = value;
+                                                });
+                                                _applySearchAndSort();
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
                       // Category chips (clone style)
                       SizedBox(
                         height: 48,
@@ -128,7 +319,10 @@ class _FoodListScreenState extends State<FoodListScreen> {
                                 color: Colors.transparent,
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(24),
-                                  onTap: () => setState(() => _selectedCategoryId = 'all'),
+                                  onTap: () {
+                                    setState(() => _selectedCategoryId = 'all');
+                                    _applySearchAndSort();
+                                  },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                                     decoration: BoxDecoration(
@@ -158,7 +352,10 @@ class _FoodListScreenState extends State<FoodListScreen> {
                               color: Colors.transparent,
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(24),
-                                onTap: () => setState(() => _selectedCategoryId = cat['id']),
+                                onTap: () {
+                                  setState(() => _selectedCategoryId = cat['id']);
+                                  _applySearchAndSort();
+                                },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                                   decoration: BoxDecoration(
@@ -188,7 +385,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
                       const SizedBox(height: 16),
 
                       // Full food list (clone cards)
-                      ..._filteredFoods.map((food) {
+                      ..._visibleFoods.map((food) {
                         final users = food['users'] as Map<String, dynamic>?;
                         final creatorName = (users?['name'] as String?)?.trim();
                         final creatorEmail = (users?['email'] as String?)?.trim();
