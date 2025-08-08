@@ -1027,7 +1027,7 @@ class _ManageScreenState extends State<_ManageScreen> {
                                             ? creatorName
                                             : (creatorEmail != null && creatorEmail.isNotEmpty ? creatorEmail : 'Restaurant');
 
-                                        sectionWidgets.add(const SizedBox(height: 24));
+                                        sectionWidgets.add(const SizedBox(height: 8));
                                         sectionWidgets.add(Text(header, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)));
                                         sectionWidgets.add(const SizedBox(height: 16));
                                         for (final food in foods) {
