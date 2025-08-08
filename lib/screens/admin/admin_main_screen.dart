@@ -1001,18 +1001,20 @@ class _ManageScreenState extends State<_ManageScreen> {
 
                                       final List<Widget> sectionWidgets = [];
 
-                                      // Your Foods section
-                                      sectionWidgets.add(
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: const [
-                                            Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                                          ],
-                                        ),
-                                      );
-                                      sectionWidgets.add(const SizedBox(height: 16));
-                                      for (final food in myFoods) {
-                                        sectionWidgets.add(foodCard(food));
+                                      // Your Foods section (only if admin has foods in this category)
+                                      if (myFoods.isNotEmpty) {
+                                        sectionWidgets.add(
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: const [
+                                              Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                            ],
+                                          ),
+                                        );
+                                        sectionWidgets.add(const SizedBox(height: 16));
+                                        for (final food in myFoods) {
+                                          sectionWidgets.add(foodCard(food));
+                                        }
                                       }
 
                                       // Other restaurants sections
@@ -1033,7 +1035,32 @@ class _ManageScreenState extends State<_ManageScreen> {
                                       });
 
                                       if (myFoods.isEmpty && groupedByCreator.isEmpty) {
-                                        sectionWidgets.add(const Center(child: Text('No foods found. Add your first food!')));
+                                        sectionWidgets.add(const SizedBox(height: 24));
+                                        sectionWidgets.add(
+                                          Center(
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  Icons.receipt_long,
+                                                  size: 64,
+                                                  color: Colors.grey,
+                                                ),
+                                                SizedBox(height: 16),
+                                                Text(
+                                                  'No foods in this category',
+                                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                                ),
+                                                SizedBox(height: 8),
+                                                Text(
+                                                  'Add foods or choose another category to see items here',
+                                                  style: TextStyle(color: Colors.grey),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
                                       }
 
                                       return Column(
@@ -1042,8 +1069,8 @@ class _ManageScreenState extends State<_ManageScreen> {
                                       );
                                     },
                                   ),
-                                  if (_filteredFoods.isEmpty)
-                      const Center(child: Text('No foods found. Add your first food!')),
+                                                                     if (_filteredFoods.isEmpty)
+                                     const SizedBox.shrink(),
                   ],
                 ),
               ),
