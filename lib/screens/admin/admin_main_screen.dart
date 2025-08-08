@@ -144,7 +144,7 @@ class _ManageScreenState extends State<_ManageScreen> {
     // Fetch all foods and join with users to get restaurant name
     final response = await Supabase.instance.client
         .from('foods')
-        .select('*, users!foods_created_by_fkey(name)')
+        .select('*, users!foods_created_by_fkey(name, email)')
         .order('created_at', ascending: false);
     final foods = List<Map<String, dynamic>>.from(response as List);
     setState(() {
@@ -802,188 +802,246 @@ class _ManageScreenState extends State<_ManageScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                                  ..._filteredFoods.map((food) => Container(
-                                        margin: const EdgeInsets.only(bottom: 16),
-                                        child: Material(
-                                          elevation: 4,
-                                          borderRadius: BorderRadius.circular(20),
-                                          color: Colors.white,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(16.0),
-                                            child: Row(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                                // Image left, vertically centered, larger size
-                                                Container(
-                                                  width: 92,
-                                                  height: 92,
-                                                  alignment: Alignment.center,
-                                                  child: ClipRRect(
-                                                    borderRadius: BorderRadius.circular(16),
-                                                    child: food['image_url'] != null
-                                                        ? Image.network(food['image_url'], width: 92, height: 92, fit: BoxFit.cover)
-                                                        : Container(
-                                                            width: 92,
-                                                            height: 92,
-                                                            color: Colors.grey[200],
-                                                            child: const Icon(Icons.fastfood, size: 44, color: Colors.grey),
-                                                          ),
+                                  Builder(
+                                    builder: (context) {
+                                      // Group foods by creator
+                                      final List<Map<String, dynamic>> myFoods = _filteredFoods
+                                          .where((food) => food['created_by'] == _userId)
+                                          .take(5)
+                                          .toList();
+
+                                      final Map<String, List<Map<String, dynamic>>> groupedByCreator = {};
+                                      for (final food in _filteredFoods) {
+                                        final creatorId = food['created_by']?.toString();
+                                        if (creatorId == null) continue;
+                                        if (creatorId == _userId) continue; // skip current admin foods here
+                                        groupedByCreator.putIfAbsent(creatorId, () => []);
+                                        if (groupedByCreator[creatorId]!.length < 5) {
+                                          groupedByCreator[creatorId]!.add(food);
+                                        }
+                                      }
+
+                                      Widget foodCard(Map<String, dynamic> food) {
+                                        return Container(
+                                          margin: const EdgeInsets.only(bottom: 16),
+                                          child: Material(
+                                            elevation: 4,
+                                            borderRadius: BorderRadius.circular(20),
+                                            color: Colors.white,
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(16.0),
+                                              child: Row(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  // Image left, vertically centered, larger size
+                                                  Container(
+                                                    width: 92,
+                                                    height: 92,
+                                                    alignment: Alignment.center,
+                                                    child: ClipRRect(
+                                                      borderRadius: BorderRadius.circular(16),
+                                                      child: food['image_url'] != null
+                                                          ? Image.network(food['image_url'], width: 92, height: 92, fit: BoxFit.cover)
+                                                          : Container(
+                                                              width: 92,
+                                                              height: 92,
+                                                              color: Colors.grey[200],
+                                                              child: const Icon(Icons.fastfood, size: 44, color: Colors.grey),
+                                                            ),
+                                                    ),
                                                   ),
-                                                ),
-                                                const SizedBox(width: 18),
-                                                // Main info column
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      // Grouped container for food name, restaurant name, 3-dot menu, and details
-                                                      Container(
-                                                        child: Column(
-                                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                                          children: [
-                                                            Row(
-                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                              children: [
-                                                                Expanded(
-                                                                  child: Column(
-                                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                                    children: [
-                                                                      Text(
-                                                                        food['name'] ?? '',
-                                                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                                                        maxLines: 1,
-                                                                        overflow: TextOverflow.ellipsis,
-                                                                      ),
-                                                                      const SizedBox(height: 1),
-                                                                      // Restaurant name
-                                                                      if (food['users'] != null && food['users']['name'] != null)
+                                                  const SizedBox(width: 18),
+                                                  // Main info column
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        // Grouped container for food name, restaurant name, 3-dot menu, and details
+                                                        Container(
+                                                          child: Column(
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              Row(
+                                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                children: [
+                                                                  Expanded(
+                                                                    child: Column(
+                                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                                      children: [
                                                                         Text(
-                                                                          food['users']['name'],
-                                                                          style: const TextStyle(fontSize: 13, color: Colors.blueGrey, fontWeight: FontWeight.w600),
+                                                                          food['name'] ?? '',
+                                                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                                                           maxLines: 1,
                                                                           overflow: TextOverflow.ellipsis,
                                                                         ),
-                                                                      // Details in one line, ellipsis if overflow
-                                                                      Text(
-                                                                        food['description'] ?? '',
-                                                                        style: const TextStyle(fontSize: 14, color: Colors.black87),
-                                                                        maxLines: 1,
-                                                                        overflow: TextOverflow.ellipsis,
+                                                                        const SizedBox(height: 1),
+                                                                        // Restaurant name
+                                                                        if (food['users'] != null && (food['users']['name'] != null || food['users']['email'] != null))
+                                                                          Text(
+                                                                            (food['users']['name'] ?? food['users']['email']) as String,
+                                                                            style: const TextStyle(fontSize: 13, color: Colors.blueGrey, fontWeight: FontWeight.w600),
+                                                                            maxLines: 1,
+                                                                            overflow: TextOverflow.ellipsis,
+                                                                          ),
+                                                                        // Details in one line, ellipsis if overflow
+                                                                        Text(
+                                                                          food['description'] ?? '',
+                                                                          style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                                                          maxLines: 1,
+                                                                          overflow: TextOverflow.ellipsis,
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                  PopupMenuButton<String>(
+                                                                    icon: const Icon(Icons.more_vert, color: Colors.grey),
+                                                                    onSelected: (value) async {
+                                                                      if (value == 'edit') {
+                                                                        final result = await _showAddOrEditFoodDialog(food: food);
+                                                                        if (result == true && mounted) {
+                                                                          _showFloatingNotification('"${food['name']}" updated successfully!', type: 'success');
+                                                                        }
+                                                                      } else if (value == 'delete') {
+                                                                        _deleteFood(food['id']);
+                                                                      }
+                                                                    },
+                                                                    itemBuilder: (context) => const [
+                                                                      PopupMenuItem(
+                                                                        value: 'edit',
+                                                                        child: ListTile(
+                                                                          leading: Icon(Icons.edit, color: Colors.blue),
+                                                                          title: Text('Edit'),
+                                                                        ),
+                                                                      ),
+                                                                      PopupMenuItem(
+                                                                        value: 'delete',
+                                                                        child: ListTile(
+                                                                          leading: Icon(Icons.delete, color: Colors.red),
+                                                                          title: Text('Delete'),
+                                                                        ),
                                                                       ),
                                                                     ],
                                                                   ),
-                                                                ),
-                                                                PopupMenuButton<String>(
-                                                                  icon: const Icon(Icons.more_vert, color: Colors.grey),
-                                                                  onSelected: (value) async {
-                                                                    if (value == 'edit') {
-                                    final result = await _showAddOrEditFoodDialog(food: food);
-                                    if (result == true && mounted) {
-                                                                        _showFloatingNotification('"${food['name']}" updated successfully!', type: 'success');
-                                                                      }
-                                                                    } else if (value == 'delete') {
-                                                                      _deleteFood(food['id']);
-                                                                    }
-                                                                  },
-                                                                  itemBuilder: (context) => [
-                                                                    const PopupMenuItem(
-                                                                      value: 'edit',
-                                                                      child: ListTile(
-                                                                        leading: Icon(Icons.edit, color: Colors.blue),
-                                                                        title: Text('Edit'),
-                                                                      ),
-                                                                    ),
-                                                                    const PopupMenuItem(
-                                                                      value: 'delete',
-                                                                      child: ListTile(
-                                                                        leading: Icon(Icons.delete, color: Colors.red),
-                                                                        title: Text('Delete'),
-                                                                      ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ],
+                                                                ],
+                                                              ),
+                                                              const SizedBox(height: 2),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        const SizedBox(height: 8),
+                                                        // Category and price row beneath the grouped container
+                                                        Row(
+                                                          children: [
+                                                            Builder(
+                                                              builder: (context) {
+                                                                final category = _categories.firstWhere(
+                                                                  (cat) => cat['id'] == food['category_id'],
+                                                                  orElse: () => {'name': 'Uncategorized'},
+                                                                );
+                                                                Color getCategoryColor(String categoryName) {
+                                                                  switch (categoryName.toLowerCase()) {
+                                                                    case 'main course':
+                                                                    case 'main':
+                                                                      return Colors.red.withOpacity(0.1);
+                                                                    case 'beverage':
+                                                                    case 'drink':
+                                                                      return Colors.blue.withOpacity(0.1);
+                                                                    case 'seafood':
+                                                                      return Colors.cyan.withOpacity(0.1);
+                                                                    case 'grilled & bbq':
+                                                                    case 'grilled':
+                                                                    case 'bbq':
+                                                                      return Colors.orange.withOpacity(0.1);
+                                                                    case 'pastries':
+                                                                    case 'pastry':
+                                                                      return Colors.purple.withOpacity(0.1);
+                                                                    case 'desserts':
+                                                                    case 'dessert':
+                                                                      return Colors.yellow.withOpacity(0.1);
+                                                                    case 'snacks':
+                                                                    case 'snack':
+                                                                      return Colors.green.withOpacity(0.1);
+                                                                    case 'etc':
+                                                                    case 'other':
+                                                                      return Colors.grey.withOpacity(0.1);
+                                                                    default:
+                                                                      return Colors.indigo.withOpacity(0.1);
+                                                                  }
+                                                                }
+                                                                return Container(
+                                                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                                  decoration: BoxDecoration(
+                                                                    color: getCategoryColor(category['name'] ?? ''),
+                                                                    borderRadius: BorderRadius.circular(12),
+                                                                  ),
+                                                                  child: Text(
+                                                                    category['name'],
+                                                                    style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600, fontSize: 12),
+                                                                  ),
+                                                                );
+                                                              },
                                                             ),
-                                                            const SizedBox(height: 2),
+                                                            const Spacer(),
+                                                            Text(
+                                                              'SAR ${food['price']?.toStringAsFixed(2) ?? ''}',
+                                                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppConstants.primaryColor),
+                                                            ),
                                                           ],
                                                         ),
-                                                      ),
-                                                      const SizedBox(height: 8),
-                                                      // Category and price row beneath the grouped container
-                                                      Row(
-                                                        children: [
-                                                          Builder(
-                                                            builder: (context) {
-                                                              final category = _categories.firstWhere(
-                                                                (cat) => cat['id'] == food['category_id'],
-                                                                orElse: () => {'name': 'Uncategorized'},
-                                                              );
-                                                              Color getCategoryColor(String categoryName) {
-                                                                switch (categoryName.toLowerCase()) {
-                                                                  case 'main course':
-                                                                  case 'main':
-                                                                    return Colors.red.withOpacity(0.1);
-                                                                  case 'beverage':
-                                                                  case 'drink':
-                                                                    return Colors.blue.withOpacity(0.1);
-                                                                  case 'seafood':
-                                                                    return Colors.cyan.withOpacity(0.1);
-                                                                  case 'grilled & bbq':
-                                                                  case 'grilled':
-                                                                  case 'bbq':
-                                                                    return Colors.orange.withOpacity(0.1);
-                                                                  case 'pastries':
-                                                                  case 'pastry':
-                                                                    return Colors.purple.withOpacity(0.1);
-                                                                  case 'desserts':
-                                                                  case 'dessert':
-                                                                    return Colors.yellow.withOpacity(0.1);
-                                                                  case 'snacks':
-                                                                  case 'snack':
-                                                                    return Colors.green.withOpacity(0.1);
-                                                                  case 'etc':
-                                                                  case 'other':
-                                                                    return Colors.grey.withOpacity(0.1);
-                                                                  default:
-                                                                    return Colors.indigo.withOpacity(0.1);
-                                                                }
-                                                              }
-                                                              return Container(
-                                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                                decoration: BoxDecoration(
-                                                                  color: getCategoryColor(category['name'] ?? ''),
-                                                                  borderRadius: BorderRadius.circular(12),
-                                                                ),
-                                                                child: Text(
-                                                                  category['name'],
-                                                                  style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600, fontSize: 12),
-                                                                ),
-                                                              );
-                                                            },
-                                                          ),
-                                                          const Spacer(),
-                                                          Text(
-                                                            'SAR ${food['price']?.toStringAsFixed(2) ?? ''}',
-                                                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppConstants.primaryColor),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
+                                                      ],
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
+                                                ],
+                                              ),
                                             ),
-                            ),
-                          ),
-                        )),
+                                          ),
+                                        );
+                                      }
+
+                                      final List<Widget> sectionWidgets = [];
+
+                                      // Your Foods section
+                                      sectionWidgets.add(
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: const [
+                                            Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                      );
+                                      sectionWidgets.add(const SizedBox(height: 16));
+                                      for (final food in myFoods) {
+                                        sectionWidgets.add(foodCard(food));
+                                      }
+
+                                      // Other restaurants sections
+                                      groupedByCreator.forEach((creatorId, foods) {
+                                        final users = foods.first['users'] as Map<String, dynamic>?;
+                                        final creatorName = (users?['name'] as String?)?.trim();
+                                        final creatorEmail = (users?['email'] as String?)?.trim();
+                                        final header = (creatorName != null && creatorName.isNotEmpty)
+                                            ? creatorName
+                                            : (creatorEmail != null && creatorEmail.isNotEmpty ? creatorEmail : 'Restaurant');
+
+                                        sectionWidgets.add(const SizedBox(height: 24));
+                                        sectionWidgets.add(Text(header, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)));
+                                        sectionWidgets.add(const SizedBox(height: 16));
+                                        for (final food in foods) {
+                                          sectionWidgets.add(foodCard(food));
+                                        }
+                                      });
+
+                                      if (myFoods.isEmpty && groupedByCreator.isEmpty) {
+                                        sectionWidgets.add(const Center(child: Text('No foods found. Add your first food!')));
+                                      }
+
+                                      return Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: sectionWidgets,
+                                      );
+                                    },
+                                  ),
                                   if (_filteredFoods.isEmpty)
                       const Center(child: Text('No foods found. Add your first food!')),
                   ],

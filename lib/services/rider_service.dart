@@ -188,6 +188,11 @@ class RiderService {
       final userId = currentUserId;
       if (userId == null) return [];
 
+      // Ensure we use the rider profile id when filtering earnings
+      final riderProfile = await getRiderProfile();
+      if (riderProfile == null) return [];
+      final riderId = riderProfile['id'];
+
       final response = await _supabase
           .from('rider_earnings')
           .select('''
@@ -199,7 +204,7 @@ class RiderService {
               estimated_distance
             )
           ''')
-          .eq('rider_id', userId)
+          .eq('rider_id', riderId)
           .order('created_at', ascending: false)
           .limit(limit);
 
