@@ -1004,6 +1004,7 @@ class _ManageScreenState extends State<_ManageScreen> {
 
                                       // Your Foods section (only if admin has foods in this category)
                                       if (myFoods.isNotEmpty) {
+                                        sectionWidgets.add(const SizedBox(height: 8));
                                         sectionWidgets.add(
                                           Row(
                                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
