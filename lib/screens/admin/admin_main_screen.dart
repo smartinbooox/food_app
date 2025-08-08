@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'food_list_screen.dart';
 import 'admin_dashboard_screen.dart';
 import '../auth/login_screen.dart';
 import 'package:image_picker/image_picker.dart';
@@ -1008,8 +1009,25 @@ class _ManageScreenState extends State<_ManageScreen> {
                                         sectionWidgets.add(
                                           Row(
                                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: const [
-                                              Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                            children: [
+                                              const Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) => FoodListScreen(
+                                                        title: 'Your Foods',
+                                                        creatorId: _userId ?? '',
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                                child: const Text(
+                                                  'See more',
+                                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppConstants.primaryColor),
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         );
@@ -1029,7 +1047,30 @@ class _ManageScreenState extends State<_ManageScreen> {
                                             : (creatorEmail != null && creatorEmail.isNotEmpty ? creatorEmail : 'Restaurant');
 
                                         sectionWidgets.add(const SizedBox(height: 8));
-                                        sectionWidgets.add(Text(header, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)));
+                                        sectionWidgets.add(Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(header, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                            GestureDetector(
+                                              onTap: () {
+                                                final creatorId = foods.first['created_by']?.toString() ?? '';
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => FoodListScreen(
+                                                      title: header,
+                                                      creatorId: creatorId,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              child: const Text(
+                                                'See more',
+                                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppConstants.primaryColor),
+                                              ),
+                                            ),
+                                          ],
+                                        ));
                                         sectionWidgets.add(const SizedBox(height: 16));
                                         for (final food in foods) {
                                           sectionWidgets.add(foodCard(food));
