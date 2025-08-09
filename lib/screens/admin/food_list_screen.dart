@@ -834,7 +834,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
                                                 ),
                                               ),
                                             ),
-                                            const SizedBox(width: 18),
+                                            const SizedBox(width: 16),
                                             // Main info column
                                             Expanded(
                                               child: Column(
@@ -888,6 +888,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
                                                                   child: ListTile(
                                                                     leading: Icon(Icons.edit, color: Colors.blue),
                                                                     title: Text('Edit'),
+                                                                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                                                                   ),
                                                                 ),
                                                                 PopupMenuItem(
@@ -895,6 +896,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
                                                                   child: ListTile(
                                                                     leading: Icon(Icons.delete, color: Colors.red),
                                                                     title: Text('Delete'),
+                                                                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                                                                   ),
                                                                 ),
                                                               ],
@@ -1020,7 +1022,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
               ),
             ),
             floatingActionButton: Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
+              padding: const EdgeInsets.only(bottom: 86.0), // Move FAB above the bottom nav
               child: FloatingActionButton(
                 onPressed: () async {
                   final result = await _showAddOrEditFoodDialog();
@@ -1034,6 +1036,78 @@ class _FoodListScreenState extends State<FoodListScreen> {
               ),
             ),
             floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+          ),
+        ),
+        // Floating bottom navigation bar
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: SafeArea(
+            minimum: const EdgeInsets.all(8),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(25),
+                child: BottomNavigationBar(
+                  currentIndex: 2, // Set to Manage tab index since this is food management
+                  onTap: (index) {
+                    // Handle navigation based on index
+                    switch (index) {
+                      case 0: // Dashboard
+                        Navigator.pushReplacementNamed(context, '/admin-dashboard');
+                        break;
+                      case 1: // Reports
+                        Navigator.pushReplacementNamed(context, '/admin-reports');
+                        break;
+                      case 2: // Manage (current screen)
+                        // Already here, do nothing
+                        break;
+                      case 3: // Settings
+                        Navigator.pushReplacementNamed(context, '/admin-settings');
+                        break;
+                    }
+                  },
+                  type: BottomNavigationBarType.fixed,
+                  backgroundColor: Colors.white,
+                  selectedItemColor: AppConstants.primaryColor,
+                  unselectedItemColor: Colors.grey,
+                  selectedLabelStyle: const TextStyle(fontSize: 0),
+                  unselectedLabelStyle: const TextStyle(fontSize: 0),
+                  elevation: 0,
+                  items: const [
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.home),
+                      label: '',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.assessment),
+                      label: '',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.assignment),
+                      // Clipboard icon for Manage
+                      label: '',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.settings),
+                      label: '',
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
         // Floating notification overlay
