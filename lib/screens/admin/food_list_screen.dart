@@ -135,12 +135,18 @@ class _FoodListScreenState extends State<FoodListScreen> {
 
   Future<void> _fetchFoods() async {
     setState(() => _isLoadingFoods = true);
-    // Fetch foods for the specific creator
-    final response = await Supabase.instance.client
-        .from('foods')
-        .select('*, users!foods_created_by_fkey(name, email)')
-        .eq('created_by', widget.creatorId)
-        .order('created_at', ascending: false);
+    // Fetch foods based on creatorId if specified, otherwise fetch all
+    final response = widget.creatorId.isNotEmpty
+        ? await Supabase.instance.client
+            .from('foods')
+            .select('*, users!foods_created_by_fkey(name, email)')
+            .eq('created_by', widget.creatorId)
+            .order('created_at', ascending: false)
+        : await Supabase.instance.client
+            .from('foods')
+            .select('*, users!foods_created_by_fkey(name, email)')
+            .order('created_at', ascending: false);
+    
     final foods = List<Map<String, dynamic>>.from(response as List);
     setState(() {
       _foods = foods;
@@ -472,7 +478,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
                                     'description': desc,
                                     'price': price,
                                     'image_url': imageUrl,
-                                    'created_by': widget.creatorId,
+                                    'created_by': _userId,
                                     'category_id': selectedCategoryId,
                                   });
                                   setState(() => _isUploading = false);
@@ -1003,6 +1009,8 @@ class _FoodListScreenState extends State<FoodListScreen> {
                                 );
                               },
                             ),
+                            if (_filteredFoods.isEmpty)
+                              const SizedBox.shrink(),
                           ],
                         ),
                       ),
@@ -1012,7 +1020,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
               ),
             ),
             floatingActionButton: Padding(
-              padding: const EdgeInsets.only(bottom: 86.0), // Move FAB above the bottom nav
+              padding: const EdgeInsets.only(bottom: 16.0),
               child: FloatingActionButton(
                 onPressed: () async {
                   final result = await _showAddOrEditFoodDialog();
