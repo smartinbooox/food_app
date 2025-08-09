@@ -248,12 +248,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
                                                     overflow: TextOverflow.ellipsis,
                                                   ),
                                                   const SizedBox(height: 1),
-                                                  Text(
-                                                    creatorLabel,
-                                                    style: const TextStyle(fontSize: 13, color: Colors.blueGrey, fontWeight: FontWeight.w600),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
+                                                  // Removed creator/account label
                                                   Text(
                                                     food['description'] ?? '',
                                                     style: const TextStyle(fontSize: 14, color: Colors.black87),
