@@ -808,7 +808,7 @@ class _ManageScreenState extends State<_ManageScreen> {
                                 // Group foods by creator
                                 final List<Map<String, dynamic>> myFoods = _filteredFoods
                                     .where((food) => food['created_by'] == _userId)
-                                    .take(5)
+                                    .take(3)
                                     .toList();
 
                                 final Map<String, List<Map<String, dynamic>>> groupedByCreator = {};
@@ -817,7 +817,7 @@ class _ManageScreenState extends State<_ManageScreen> {
                                   if (creatorId == null) continue;
                                   if (creatorId == _userId) continue; // skip current admin foods here
                                   groupedByCreator.putIfAbsent(creatorId, () => []);
-                                  if (groupedByCreator[creatorId]!.length < 5) {
+                                  if (groupedByCreator[creatorId]!.length < 3) {
                                     groupedByCreator[creatorId]!.add(food);
                                   }
                                 }
