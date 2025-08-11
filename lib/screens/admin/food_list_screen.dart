@@ -751,6 +751,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
                                 color: Colors.transparent,
                                 borderRadius: BorderRadius.circular(16),
                               ),
+                              margin: const EdgeInsets.only(bottom: 16), // Add margin bottom for spacing
                               child: SizedBox(
                                 height: 48,
                                 child: ListView.separated(
