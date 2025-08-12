@@ -20,11 +20,28 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
   String? _restaurantId;
   Timer? _refreshTimer;
   late TabController _tabController;
+  
+  // New state for 2x2 grid navigation
+  String _selectedStatus = 'pending'; // Default to pending
+  late AnimationController _slideController;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(1.0, 0.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeInOut,
+    ));
+    
     _getCurrentRestaurant();
     _fetchOrders();
     // Refresh orders every 30 seconds
@@ -37,11 +54,12 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
   void dispose() {
     _refreshTimer?.cancel();
     _tabController.dispose();
+    _slideController.dispose();
     super.dispose();
   }
 
   Future<void> _getCurrentRestaurant() async {
-    // Check if userId was passed from login
+    // Check if userId was passed from dashboard
     if (widget.userId != null) {
       _restaurantId = widget.userId;
       print('DEBUG: Restaurant ID set from widget: $_restaurantId');
@@ -214,6 +232,60 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
     }
   }
 
+  void _selectStatus(String status) {
+    setState(() {
+      _selectedStatus = status;
+    });
+    _slideController.forward().then((_) {
+      _slideController.reset();
+    });
+  }
+
+  List<Map<String, dynamic>> _getOrdersByStatus(String status) {
+    switch (status) {
+      case 'pending':
+        return orders.where((o) => o['status'] == 'pending').toList();
+      case 'preparing':
+        return orders.where((o) => o['status'] == 'preparing').toList();
+      case 'ready':
+        return orders.where((o) => o['status'] == 'ready').toList();
+      case 'completed':
+        return completedOrders;
+      default:
+        return [];
+    }
+  }
+
+  String _getStatusDisplayName(String status) {
+    switch (status) {
+      case 'pending':
+        return 'Pending';
+      case 'preparing':
+        return 'Serving';
+      case 'ready':
+        return 'Ready';
+      case 'completed':
+        return 'Completed';
+      default:
+        return status;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'pending':
+        return Colors.blue;
+      case 'preparing':
+        return Colors.red;
+      case 'ready':
+        return const Color(0xFFD4A900); // Muted yellow
+      case 'completed':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
   Widget _buildOrdersList(List<Map<String, dynamic>> orderList, bool isHistory) {
     if (orderList.isEmpty) {
       return Center(
@@ -348,6 +420,81 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
     );
   }
 
+  Widget _buildStatusBox(String status, String title, Color color, IconData icon) {
+    final isSelected = _selectedStatus == status;
+    final orderCount = _getOrdersByStatus(status).length;
+    
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _selectStatus(status),
+        child: Container(
+          margin: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withOpacity(isSelected ? 0.2 : 0.1),
+                color.withOpacity(isSelected ? 0.15 : 0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: color.withOpacity(isSelected ? 0.4 : 0.2),
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: isSelected ? [
+              BoxShadow(
+                color: color.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ] : null,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 24,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  orderCount.toString(),
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: color.withOpacity(0.8),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -378,218 +525,27 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Order statistics
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppConstants.primaryColor.withOpacity(0.1),
-                            AppConstants.primaryColor.withOpacity(0.05),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: AppConstants.primaryColor.withOpacity(0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppConstants.primaryColor.withOpacity(0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.pending_actions,
-                                size: 24,
-                                color: AppConstants.primaryColor,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              orders.where((o) => o['status'] == 'pending').length.toString(),
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: AppConstants.primaryColor,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Pending',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppConstants.primaryColor.withOpacity(0.8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppConstants.secondaryColor.withOpacity(0.08),
-                            AppConstants.secondaryColor.withOpacity(0.03),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: AppConstants.secondaryColor.withOpacity(0.15),
-                          width: 1,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppConstants.secondaryColor.withOpacity(0.10),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.restaurant,
-                                size: 24,
-                                color: Color(0xFFD4A900),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              orders.where((o) => o['status'] == 'preparing').length.toString(),
-                              style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFD4A900),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Serving',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFFD4A900).withOpacity(0.8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppConstants.successColor.withOpacity(0.1),
-                            AppConstants.successColor.withOpacity(0.05),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: AppConstants.successColor.withOpacity(0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppConstants.successColor.withOpacity(0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.check_circle,
-                                size: 24,
-                                color: AppConstants.successColor,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              orders.where((o) => o['status'] == 'ready').length.toString(),
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: AppConstants.successColor,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Ready',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppConstants.successColor.withOpacity(0.8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // Tab bar for orders
+              // 2x2 Status Grid
               Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicator: BoxDecoration(
-                    color: AppConstants.primaryColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.grey[600],
-                  labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
-                  tabs: [
-                    Tab(
+                height: 200,
+                child: Column(
+                  children: [
+                    // Upper row
+                    Expanded(
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.pending_actions, size: 16),
-                          const SizedBox(width: 4),
-                          Text('Active Orders (${orders.length})'),
+                          _buildStatusBox('pending', 'Pending', Colors.blue, Icons.pending_actions),
+                          _buildStatusBox('preparing', 'Serving', Colors.red, Icons.restaurant),
                         ],
                       ),
                     ),
-                    Tab(
+                    const SizedBox(height: 8),
+                    // Lower row
+                    Expanded(
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.history, size: 16),
-                          const SizedBox(width: 4),
-                          Text('Order History (${completedOrders.length})'),
+                          _buildStatusBox('ready', 'Ready', const Color(0xFFD4A900), Icons.check_circle),
+                          _buildStatusBox('completed', 'Completed', Colors.green, Icons.done_all),
                         ],
                       ),
                     ),
@@ -597,17 +553,44 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
                 ),
               ),
               const SizedBox(height: 16),
+              
+              // Status Title
+              Row(
+                children: [
+                  Icon(
+                    _getStatusColor(_selectedStatus),
+                    color: _getStatusColor(_selectedStatus),
+                    size: 24,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${_getStatusDisplayName(_selectedStatus)} Orders',
+                    style: AppConstants.subheadingStyle.copyWith(
+                      color: _getStatusColor(_selectedStatus),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${_getOrdersByStatus(_selectedStatus).length} orders',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // Orders List
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator(color: AppConstants.primaryColor))
-                    : TabBarView(
-                        controller: _tabController,
-                        children: [
-                          // Active Orders Tab
-                          _buildOrdersList(orders, false),
-                          // Order History Tab
-                          _buildOrdersList(completedOrders, true),
-                        ],
+                    : SlideTransition(
+                        position: _slideAnimation,
+                        child: _buildOrdersList(
+                          _getOrdersByStatus(_selectedStatus),
+                          _selectedStatus == 'completed',
+                        ),
                       ),
               ),
             ],
