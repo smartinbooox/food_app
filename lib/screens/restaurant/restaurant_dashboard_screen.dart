@@ -382,65 +382,170 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
               Row(
                 children: [
                   Expanded(
-                    child: Card(
-                      color: AppConstants.primaryColor.withOpacity(0.1),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppConstants.primaryColor.withOpacity(0.1),
+                            AppConstants.primaryColor.withOpacity(0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppConstants.primaryColor.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         child: Column(
                           children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppConstants.primaryColor.withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.pending_actions,
+                                size: 24,
+                                color: AppConstants.primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
                             Text(
                               orders.where((o) => o['status'] == 'pending').length.toString(),
                               style: TextStyle(
-                                fontSize: 24,
+                                fontSize: 28,
                                 fontWeight: FontWeight.bold,
                                 color: AppConstants.primaryColor,
                               ),
                             ),
-                            const Text('Pending', style: TextStyle(fontSize: 12)),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Pending',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppConstants.primaryColor.withOpacity(0.8),
+                              ),
+                            ),
                           ],
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: Card(
-                      color: AppConstants.secondaryColor.withOpacity(0.1),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppConstants.secondaryColor.withOpacity(0.1),
+                            AppConstants.secondaryColor.withOpacity(0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppConstants.secondaryColor.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         child: Column(
                           children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppConstants.secondaryColor.withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.restaurant,
+                                size: 24,
+                                color: AppConstants.secondaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
                             Text(
                               orders.where((o) => o['status'] == 'preparing').length.toString(),
                               style: TextStyle(
-                                fontSize: 24,
+                                fontSize: 28,
                                 fontWeight: FontWeight.bold,
                                 color: AppConstants.secondaryColor,
                               ),
                             ),
-                            const Text('Preparing', style: TextStyle(fontSize: 12)),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Preparing',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppConstants.secondaryColor.withOpacity(0.8),
+                              ),
+                            ),
                           ],
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: Card(
-                      color: AppConstants.successColor.withOpacity(0.1),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppConstants.successColor.withOpacity(0.1),
+                            AppConstants.successColor.withOpacity(0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppConstants.successColor.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         child: Column(
                           children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppConstants.successColor.withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.check_circle,
+                                size: 24,
+                                color: AppConstants.successColor,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
                             Text(
                               orders.where((o) => o['status'] == 'ready').length.toString(),
                               style: TextStyle(
-                                fontSize: 24,
+                                fontSize: 28,
                                 fontWeight: FontWeight.bold,
                                 color: AppConstants.successColor,
                               ),
                             ),
-                            const Text('Ready', style: TextStyle(fontSize: 12)),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Ready',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppConstants.successColor.withOpacity(0.8),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -508,6 +613,20 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
             ],
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RestaurantMenuScreen(userId: _restaurantId),
+            ),
+          );
+        },
+        backgroundColor: AppConstants.primaryColor,
+        child: const Icon(Icons.restaurant, color: Colors.white, size: 28),
+        elevation: 8,
+        tooltip: 'Add Food Item',
       ),
     );
   }
