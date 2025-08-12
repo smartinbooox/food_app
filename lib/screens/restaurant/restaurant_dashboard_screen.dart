@@ -412,66 +412,52 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
         onTap: () => _selectStatus(status),
         child: Container(
           margin: const EdgeInsets.all(4),
+          height: 50,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                color.withOpacity(isSelected ? 0.2 : 0.1),
-                color.withOpacity(isSelected ? 0.15 : 0.05),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(20),
+            color: isSelected ? color.withOpacity(0.15) : Colors.grey[200],
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: color.withOpacity(isSelected ? 0.4 : 0.2),
+              color: isSelected ? color : Colors.grey[300]!,
               width: isSelected ? 2 : 1,
             ),
-            boxShadow: isSelected ? [
-              BoxShadow(
-                color: color.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ] : null,
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 24,
-                    color: color,
+          child: Row(
+            children: [
+              // Icon on the left
+              Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: color,
+                ),
+              ),
+              // Text in the middle
+              Expanded(
+                child: Center(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? color : Colors.grey[700],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  orderCount.toString(),
+              ),
+              // Count on the right
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Text(
+                  '(${orderCount})',
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: color,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: color.withOpacity(0.8),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -510,7 +496,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
             children: [
               // 2x2 Status Grid
               Container(
-                height: 200,
+                height: 120,
                 child: Column(
                   children: [
                     // Upper row
