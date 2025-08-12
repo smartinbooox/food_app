@@ -541,7 +541,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
               Row(
                 children: [
                   Icon(
-                    _getStatusColor(_selectedStatus),
+                    Icons.circle,
                     color: _getStatusColor(_selectedStatus),
                     size: 24,
                   ),
