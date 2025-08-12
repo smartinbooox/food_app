@@ -445,13 +445,13 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            AppConstants.secondaryColor.withOpacity(0.1),
-                            AppConstants.secondaryColor.withOpacity(0.05),
+                            AppConstants.secondaryColor.withOpacity(0.08),
+                            AppConstants.secondaryColor.withOpacity(0.03),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: AppConstants.secondaryColor.withOpacity(0.2),
+                          color: AppConstants.secondaryColor.withOpacity(0.15),
                           width: 1,
                         ),
                       ),
@@ -462,22 +462,22 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppConstants.secondaryColor.withOpacity(0.15),
+                                color: AppConstants.secondaryColor.withOpacity(0.10),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
                                 Icons.restaurant,
                                 size: 24,
-                                color: AppConstants.secondaryColor,
+                                color: Color(0xFFD4A900),
                               ),
                             ),
                             const SizedBox(height: 12),
                             Text(
                               orders.where((o) => o['status'] == 'preparing').length.toString(),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
-                                color: AppConstants.secondaryColor,
+                                color: Color(0xFFD4A900),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -486,7 +486,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppConstants.secondaryColor.withOpacity(0.8),
+                                color: const Color(0xFFD4A900).withOpacity(0.8),
                               ),
                             ),
                           ],
