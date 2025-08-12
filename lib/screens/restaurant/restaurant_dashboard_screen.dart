@@ -482,7 +482,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Preparing',
+                              'Serving',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -614,20 +614,23 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => RestaurantMenuScreen(userId: _restaurantId),
-            ),
-          );
-        },
-        backgroundColor: AppConstants.primaryColor,
-        child: const Icon(Icons.restaurant, color: Colors.white, size: 28),
-        elevation: 8,
-        tooltip: 'Add Food Item',
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 86.0), // Move FAB above the bottom nav
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => RestaurantMenuScreen(userId: _restaurantId),
+              ),
+            );
+          },
+          backgroundColor: AppConstants.primaryColor,
+          child: const Icon(Icons.restaurant, color: Colors.white, size: 28),
+          tooltip: 'Add Food Item',
+        ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
   }
 } 

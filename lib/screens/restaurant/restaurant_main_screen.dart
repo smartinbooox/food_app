@@ -91,7 +91,7 @@ class _RestaurantMainScreenState extends State<RestaurantMainScreen> {
                         label: '',
                       ),
                       BottomNavigationBarItem(
-                        icon: Icon(Icons.analytics),
+                        icon: Icon(Icons.assessment),
                         label: '',
                       ),
                       BottomNavigationBarItem(
