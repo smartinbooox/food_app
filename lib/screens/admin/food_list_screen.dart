@@ -578,26 +578,35 @@ class _FoodListScreenState extends State<FoodListScreen> {
       orElse: () => {'name': 'Uncategorized'},
     );
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75, // Limit to 75% of screen height
+        minHeight: MediaQuery.of(context).size.height * 0.4, // Minimum 40% of screen height
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
-      child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Drag handle
+          // Drag handle with more spacing
             Container(
               width: 48,
               height: 5,
-              margin: const EdgeInsets.only(bottom: 18),
+            margin: const EdgeInsets.only(bottom: 24),
               decoration: BoxDecoration(
                 color: Colors.grey[300],
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
+          // Scrollable content
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
             // Food image
             ClipRRect(
               borderRadius: BorderRadius.circular(20),
@@ -610,7 +619,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
                       child: const Icon(Icons.fastfood, size: 64, color: Colors.grey),
                     ),
             ),
-            const SizedBox(height: 18),
+                  const SizedBox(height: 20),
             // Food name
             Text(
               food['name'] ?? '',
@@ -636,77 +645,81 @@ class _FoodListScreenState extends State<FoodListScreen> {
                 style: TextStyle(color: AppConstants.primaryColor, fontWeight: FontWeight.w600, fontSize: 14),
               ),
             ),
-            const SizedBox(height: 18),
+                  const SizedBox(height: 20),
             // Description
             if ((food['description'] ?? '').toString().isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Description', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                   Text(
                     food['description'],
                     style: const TextStyle(fontSize: 15, color: Colors.black87),
                   ),
-                  const SizedBox(height: 24),
+                        const SizedBox(height: 24),
                 ],
               ),
-            // Action Buttons
-            Row(
-              children: [
-                // Edit Button
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      Navigator.pop(context); // Close the bottom sheet
-                      final result = await _showAddOrEditFoodDialog(food: food);
-                      if (result == true && mounted) {
-                        _showFloatingNotification('"${food['name']}" updated successfully!', type: 'success');
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    icon: const Icon(Icons.edit, size: 20),
-                    label: const Text(
-                      'Edit',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // Delete Button
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      Navigator.pop(context); // Close the bottom sheet
-                      _deleteFood(food['id']);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    icon: const Icon(Icons.delete, size: 20),
-                    label: const Text(
-                      'Delete',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
+          ),
+          // Action Buttons (fixed at bottom)
+          const SizedBox(height: 20),
+          Row(
+                children: [
+              // Edit Button
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(context); // Close the bottom sheet
+                    final result = await _showAddOrEditFoodDialog(food: food);
+                    if (result == true && mounted) {
+                      _showFloatingNotification('"${food['name']}" updated successfully!', type: 'success');
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  icon: const Icon(Icons.edit, size: 20),
+                  label: const Text(
+                    'Edit',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Delete Button
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(context); // Close the bottom sheet
+                    _deleteFood(food['id']);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  icon: const Icon(Icons.delete, size: 20),
+                  label: const Text(
+                    'Delete',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                  ),
+                ],
+              ),
+          const SizedBox(height: 16),
           ],
-        ),
       ),
     );
   }

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:path/path.dart' as path;
 import '../../core/constants/app_constants.dart';
+import 'dart:async'; // Added for Timer
 
 class RestaurantMenuScreen extends StatefulWidget {
   final String? userId;
@@ -31,6 +33,11 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
   XFile? _pickedImage;
   
   final List<String> _sortOptions = ['All', 'Name', 'Price', 'Date'];
+
+  // Floating notification state
+  bool _showNotification = false;
+  String _notificationMessage = '';
+  Timer? _notificationTimer;
 
   @override
   void initState() {
@@ -428,9 +435,7 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
                                     final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
                                     
                                     if (name.isEmpty || price <= 0 || selectedCategoryId.isEmpty) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Please fill all required fields'), backgroundColor: Colors.red),
-                                      );
+                                      _showFloatingNotification('Please fill all required fields', type: 'error');
                                       return;
                                     }
                                     
@@ -482,22 +487,15 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
                                       _fetchFoods();
                                       
                                       if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(isEdit ? 'Food item updated successfully!' : 'Food item added successfully!'),
-                                            backgroundColor: Colors.green,
-                                          ),
+                                        _showFloatingNotification(
+                                          isEdit ? 'Food item updated successfully!' : 'Food item added successfully!',
+                                          type: 'success'
                                         );
                                       }
                                     } catch (e) {
                                       setState(() => _isUploading = false);
                                       if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Error: $e'),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
+                                        _showFloatingNotification('Error: $e', type: 'error');
                                       }
                                     }
                                   },
@@ -539,22 +537,62 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
       _fetchFoods();
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('"$foodName" deleted successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        _showFloatingNotification('"$foodName" deleted successfully!', type: 'success');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting food: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showFloatingNotification('Error deleting food: $e', type: 'error');
       }
+    }
+  }
+
+  // Show floating notification
+  void _showFloatingNotification(String message, {String type = 'success'}) {
+    setState(() {
+      _notificationMessage = message;
+      _notificationType = type;
+      _showNotification = true;
+    });
+    // Auto-dismiss after 3 seconds
+    _notificationTimer?.cancel();
+    _notificationTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _showNotification = false;
+        });
+      }
+    });
+  }
+
+  String _notificationType = 'success';
+
+  Color _getNotificationColor(String type) {
+    switch (type) {
+      case 'success':
+        return Colors.green;
+      case 'error':
+        return Colors.red;
+      case 'warning':
+        return Colors.amber[800]!;
+      case 'info':
+        return Colors.blue;
+      default:
+        return AppConstants.primaryColor;
+    }
+  }
+
+  IconData _getNotificationIcon(String type) {
+    switch (type) {
+      case 'success':
+        return Icons.check_circle;
+      case 'error':
+        return Icons.error;
+      case 'warning':
+        return Icons.warning;
+      case 'info':
+        return Icons.info;
+      default:
+        return Icons.info;
     }
   }
 
@@ -564,6 +602,7 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
     _descController.dispose();
     _priceController.dispose();
     _searchController.dispose();
+    _notificationTimer?.cancel();
     super.dispose();
   }
 
@@ -582,7 +621,9 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
       ...reorderedCategories
     ];
     
-    return ScaffoldMessenger(
+    return Stack(
+      children: [
+        ScaffoldMessenger(
       key: _scaffoldMessengerKey,
       child: Scaffold(
         appBar: AppBar(
@@ -797,14 +838,8 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Your Foods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              ..._filteredFoods.map((food) => Container(
+                                  // Food cards
+                                  ...(_filteredFoods.map((food) => Container(
                                 margin: const EdgeInsets.only(bottom: 16),
                                 child: Material(
                                   elevation: 4,
@@ -823,28 +858,7 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
                                           child: ClipRRect(
                                             borderRadius: BorderRadius.circular(16),
                                             child: food['image_url'] != null
-                                                ? Image.network(
-                                                    food['image_url'], 
-                                                    width: 92, 
-                                                    height: 92, 
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder: (context, error, stackTrace) {
-                                                      print('DEBUG: Image load error for ${food['name']}: $error');
-                                                      return Container(
-                                                        width: 92,
-                                                        height: 92,
-                                                        color: Colors.grey[200],
-                                                        child: const Icon(Icons.fastfood, size: 44, color: Colors.grey),
-                                                      );
-                                                    },
-                                                    loadingBuilder: (context, child, loadingProgress) {
-                                                      if (loadingProgress == null) {
-                                                        print('DEBUG: Image loaded successfully for ${food['name']}: ${food['image_url']}');
-                                                        return child;
-                                                      }
-                                                      return const Center(child: CircularProgressIndicator());
-                                                    },
-                                                  )
+                                                    ? Image.network(food['image_url'], width: 92, height: 92, fit: BoxFit.cover)
                                                 : Container(
                                                     width: 92,
                                                     height: 92,
@@ -859,7 +873,7 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              // Grouped container for food name, 3-dot menu, and details
+                                                  // Grouped container for food name, restaurant name, 3-dot menu, and details
                                               Container(
                                                 child: Column(
                                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -895,26 +909,21 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
                                                             if (value == 'edit') {
                                                               final result = await _showAddOrEditFoodDialog(food: food);
                                                               if (result == true && mounted) {
-                                                                _scaffoldMessengerKey.currentState?.showSnackBar(
-                                                                  SnackBar(
-                                                                    content: Text('"${food['name']}" updated successfully!'),
-                                                                    backgroundColor: Colors.green,
-                                                                  ),
-                                                                );
+                                                                    _showFloatingNotification('"${food['name']}" updated successfully!', type: 'success');
                                                               }
                                                             } else if (value == 'delete') {
                                                               _deleteFood(food['id']);
                                                             }
                                                           },
-                                                          itemBuilder: (context) => [
-                                                            const PopupMenuItem(
+                                                              itemBuilder: (context) => const [
+                                                                PopupMenuItem(
                                                               value: 'edit',
                                                               child: ListTile(
                                                                 leading: Icon(Icons.edit, color: Colors.blue),
                                                                 title: Text('Edit'),
                                                               ),
                                                             ),
-                                                            const PopupMenuItem(
+                                                                PopupMenuItem(
                                                               value: 'delete',
                                                               child: ListTile(
                                                                 leading: Icon(Icons.delete, color: Colors.red),
@@ -996,7 +1005,7 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
                                     ),
                                   ),
                                 ),
-                              )),
+                                  ))),
                               if (_filteredFoods.isEmpty)
                                 const Center(child: Text('No foods found. Add your first food!')),
                             ],
@@ -1013,6 +1022,51 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
           child: const Icon(Icons.add, color: Colors.white),
         ),
       ),
+        ),
+        // Floating notification overlay
+        if (_showNotification)
+          Positioned(
+            top: 12,
+            left: 0,
+            right: 0,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+              decoration: BoxDecoration(
+                color: _getNotificationColor(_notificationType),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Icon(_getNotificationIcon(_notificationType), color: Colors.white, size: 24),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _notificationMessage,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _showNotification = false;
+                      });
+                    },
+                    icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 } 
