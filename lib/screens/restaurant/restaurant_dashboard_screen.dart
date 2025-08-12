@@ -13,34 +13,19 @@ class RestaurantDashboardScreen extends StatefulWidget {
   State<RestaurantDashboardScreen> createState() => _RestaurantDashboardScreenState();
 }
 
-class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> with TickerProviderStateMixin {
+class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
   List<Map<String, dynamic>> orders = [];
   List<Map<String, dynamic>> completedOrders = [];
   bool _isLoading = true;
   String? _restaurantId;
   Timer? _refreshTimer;
-  late TabController _tabController;
   
   // New state for 2x2 grid navigation
   String _selectedStatus = 'pending'; // Default to pending
-  late AnimationController _slideController;
-  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(1.0, 0.0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeInOut,
-    ));
     
     _getCurrentRestaurant();
     _fetchOrders();
@@ -53,8 +38,6 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
   @override
   void dispose() {
     _refreshTimer?.cancel();
-    _tabController.dispose();
-    _slideController.dispose();
     super.dispose();
   }
 
@@ -160,7 +143,10 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
   };
 
   Future<void> _updateOrderStatus(int index) async {
-    final order = orders[index];
+    final orderList = _getOrdersByStatus(_selectedStatus);
+    if (index >= orderList.length) return;
+    
+    final order = orderList[index];
     final currentStatus = order['status'];
     String newStatus = currentStatus;
     
@@ -235,9 +221,6 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
   void _selectStatus(String status) {
     setState(() {
       _selectedStatus = status;
-    });
-    _slideController.forward().then((_) {
-      _slideController.reset();
     });
   }
 
@@ -585,12 +568,9 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> w
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator(color: AppConstants.primaryColor))
-                    : SlideTransition(
-                        position: _slideAnimation,
-                        child: _buildOrdersList(
-                          _getOrdersByStatus(_selectedStatus),
-                          _selectedStatus == 'completed',
-                        ),
+                    : _buildOrdersList(
+                        _getOrdersByStatus(_selectedStatus),
+                        _selectedStatus == 'completed',
                       ),
               ),
             ],
