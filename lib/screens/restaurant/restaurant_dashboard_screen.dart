@@ -340,77 +340,52 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      // Top row - Order ID and quick stats
-                      Row(
-                        children: [
-                          // Left side - Food Order ID
-                          Expanded(
-                            flex: 3,
-                            child: Text(
-                              'Food Order #${order['id'].toString().substring(0, 8)}...',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
+                      // Left side - Order ID and customer
+                      Expanded(
+                        flex: 3,
+                        child: Row(
+                          children: [
+                            // Order ID (no dot, no "Food Order" text)
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '#${order['id'].toString().substring(0, 8)}...',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${order['items'].length} items • ${_formatTimeAgo(DateTime.parse(order['created_at']))}',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          // Right side - Items count and time
-                          Expanded(
-                            flex: 2,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Text(
-                                  '${order['items'].length} items',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.grey[700],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '• ${_formatTimeAgo(DateTime.parse(order['created_at']))}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       
-                      const SizedBox(height: 8),
-                      
-                      // Bottom row - Customer name and total amount
-                      Row(
-                        children: [
-                          // Left side - Customer name
-                          Expanded(
-                            flex: 3,
-                            child: Text(
-                              order['customer'] ?? 'Unknown Customer',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[700],
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          // Right side - Total amount
-                          Expanded(
-                            flex: 2,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                      // Right side - Price and action
+                      Expanded(
+                        flex: 2,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            // Price
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
                                   'SAR ${(order['total_amount'] ?? 0.0).toStringAsFixed(2)}',
@@ -420,66 +395,49 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                                     color: AppConstants.primaryColor,
                                   ),
                                 ),
+                                Text(
+                                  order['status'].toString().toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: statusColor,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
-                      
-                      // Action button row (only for non-completed orders)
-                      if (!isHistory && order['status'] != 'completed') ...[
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            // Status indicator on the left
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: statusColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Status text
-                            Text(
-                              order['status'].toString().toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: statusColor,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const Spacer(),
-                            // Action button (search bar style)
-                            Container(
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: statusColor,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: TextButton(
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                            
+                            // Action button or arrow
+                            if (!isHistory && order['status'] != 'completed') ...[
+                              const SizedBox(width: 12),
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: statusColor,
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                onPressed: () => _updateOrderStatus(index),
-                                child: Text(
-                                  _nextStatusLabel(order['status']),
-                                  style: const TextStyle(
+                                child: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  icon: Icon(
+                                    _getActionIcon(order['status']),
+                                    size: 16,
                                     color: Colors.white,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
                                   ),
+                                  onPressed: () => _updateOrderStatus(index),
                                 ),
                               ),
-                            ),
+                            ] else ...[
+                              const SizedBox(width: 12),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                size: 16,
+                                color: Colors.grey[400],
+                              ),
+                            ],
                           ],
                         ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
